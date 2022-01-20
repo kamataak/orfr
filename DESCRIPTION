@@ -1,0 +1,26 @@
+Package: orfr
+Type: Package
+Title: The Model-based Approach to ORF Assessment Data 
+Version: 0.0.0.9000
+Author: c(
+    person("Akihito", "Kamata", email = "", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-9570-1464")),
+    person("Cornelis J.", "Potgieter", email = "c.potgieter@tcu.edu", role = "aut"),
+    person("Yusuf", "Kara", email = "", role = "aut",  comment = c(ORCID = "0000-0003-0691-0630")),
+    person("Sarunya", "Somsong", email = "sarunya.ss@hotmail.com", role = "aut", comment = c(ORCID = "0000-0002-4974-7346")),
+    person("Kuo", "Wang", email = "wangkuo@nifty.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-4925-0591"))
+    )
+Maintainer: Kuo Wang <wangkuo@nifty.com>
+Description: Fit oral reading fluency (ORF) data to estimate parameters of an ORF psychometric model, including passage parameters and students' model-based fluency scores.
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: false
+RoxygenNote: 7.1.1
+Imports: 
+    tibble,rootSolve,tidyverse,tidyr,magrittr,doParallel,foreach,futile.logger,
+    greekLetters,mvtnorm,MultiGHQuad,
+    nleqslv,tryCatchLog,rstan,runjags,dplyr
+Suggests: 
+    testthat (>= 3.5.0)
+Config/testthat/edition: 3
+URL: https://github.com/kamataak/ModelBasedORF_Package
+BugReports: https://github.com/wangkuo08/ModelBasedORF_Package/issues
