@@ -18,22 +18,22 @@
 #'
 #'
 #' @param object - reading data object comes from prep function
-#' @param K.in - number of passages, default is 5
+#' @param k.in - number of passages, default is 5
 #' @param reps.in - repeats, default is 2
-#' @param ests.in - if not give, mom function will be called and get est.in output
-#' @param data_check - boolean, if need to have a data check, default is FALSE
-#' @param est - estimator keyword, MCEM or MCMC
-#' @param se - standard error keyword, default is Analytic
+#' @param ests.in - if not given, mom function will be called and get est.in output
+#' @param data.check - boolean, if need to have a data check, default is FALSE
+#' @param est - estimator keyword, mcem or mcmc
+#' @param se - standard error keyword, default is analytic
 #' @param verbose - boolean, if shows the summary, default is FALSE
 #'
 #' @return MCEM list, MCMC list
 #' @export
-mcem <- function(object,K.in=5,reps.in=2,ests.in,
-                     data_check=FALSE, est="MCEM",se="Analytic",verbose=FALSE) {
-  if (est == "MCEM") {
+mcem <- function(object,k.in=5,reps.in=2,ests.in,
+                     data.check=FALSE, est="mcem",se="analytic",verbose=FALSE) {
+  if (est == "mcem") {
     dat <- object
     return(
-      run_mcem(dat$Y,dat$logT10,dat$N,dat$I,K.in,reps.in,ests.in,data_check,verbose=verbose)
+      run_mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,data.check,verbose=verbose)
     )
   } else { # for MCMC, mcem parameters are necessary
     # Check MCEM object
@@ -72,16 +72,16 @@ mcem <- function(object,K.in=5,reps.in=2,ests.in,
 #' @param stu.data - student reading data
 #' @param pass.data - passage parameters data
 #' @param cases - student id vectors
-#' @param est - estimator keyword / c("MLE", "MAP", "EAP")
-#' @param se - standard error keyword / c("Analytic", "bootstrp")
+#' @param est - estimator keyword / c("mle", "map", "eap")
+#' @param se - standard error keyword / c("analytic", "bootstrap")
 #' @param wo - wcpm option / c("internal", "external"), default is internal
-#' @param failsafe - retry time for bootstrp / default 0, can set to 5 ~ 50
-#' @param bootstrp - set K number of bootstrp / default 100
+#' @param failsafe - retry time for bootstrap / default 0, can set to 5 ~ 50
+#' @param bootstrp - set K number of bootstrap / default 100
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
 wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
-                     est="MAP", se="Analytic", wo="internal", failsafe=0, bootstrap=100) {
+                     est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100) {
   # loading logger
   log_initiating()
 
@@ -117,9 +117,9 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
 
   bootstrap.out <- tibble()
   error_case <- tibble()
-  if (se == "Analytic") {
+  if (se == "analytic") {
     run_wcpm(object, stu.data, pass.data, cases, perfect_season, est, lo = -4, hi = 4, q = 100, kappa = 1)
-  } else if (se == "Bootstrap"){ #for bootstrap
+  } else if (se == "bootstrap"){ #for bootstrap
 
     RE_TRY <- failsafe # Define retry, if 0, no retry
     j <- 0 # index for retry time
