@@ -77,11 +77,12 @@ mcem <- function(object,K.in=5,reps.in=2,ests.in,
 #' @param wo - wcpm option / c("internal", "external"), default is internal
 #' @param failsafe - retry time for bootstrp / default 0, can set to 5 ~ 50
 #' @param bootstrp - set K number of bootstrp / default 100
+#' @param hyperparam.out - hyper parameter output flag, default FALSE, if TRUE, output theta and tau
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
 wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
-                     est="MAP", se="Analytic", wo="internal", failsafe=0, bootstrap=100) {
+                     est="MAP", se="Analytic", wo="internal", failsafe=0, bootstrap=100, hyperparam.out=FALSE) {
   # loading logger
   log_initiating()
 
@@ -118,7 +119,7 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
   bootstrap.out <- tibble()
   error_case <- tibble()
   if (se == "Analytic") {
-    run_wcpm(object, stu.data, pass.data, cases, perfect_season, est, lo = -4, hi = 4, q = 100, kappa = 1)
+    run_wcpm(object, stu.data, pass.data, cases, perfect_season, est, hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1)
   } else if (se == "Bootstrap"){ #for bootstrap
 
     RE_TRY <- failsafe # Define retry, if 0, no retry

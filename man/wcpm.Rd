@@ -13,7 +13,8 @@ wcpm(
   se = "Analytic",
   wo = "internal",
   failsafe = 0,
-  bootstrap = 100
+  bootstrap = 100,
+  hyperparam.out = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ wcpm(
 \item{wo}{- wcpm option / c("internal", "external"), default is internal}
 
 \item{failsafe}{- retry time for bootstrp / default 0, can set to 5 ~ 50}
+
+\item{hyperparam.out}{- hyper parameter output flag, default FALSE, if TRUE, output theta and tau}
 
 \item{bootstrp}{- set K number of bootstrp / default 100}
 }
