@@ -7,7 +7,7 @@
 \method{plot}{mcem}(object, X)
 }
 \arguments{
-\item{object}{= object}
+\item{object}{= mcem object}
 
 \item{X}{= dataset to plot}
 
