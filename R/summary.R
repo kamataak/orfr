@@ -108,8 +108,8 @@ summary.wcpm <- function(object, digits=4,verbose=TRUE) {
 #' A copy of the GNU General Public License is available at
 #' http://www.gnu.org/licenses/
 #'
-#' @param object
-#' @param digits
+#' @param object = bootstrap object
+#' @param digits = print out numeric with specific digits
 #' @param geterror, summary error case, default FALSE
 #' @param verbose show summary on screen, default TRUE
 #'

@@ -15,7 +15,7 @@
 #'
 #' @return SE dataset
 getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP", kappa=1, bootstrap=100) {
-  log_initiating()
+  log.initiating()
   flog.info("Begin getBootstrapSE process", name = "orfrlog")
 
   # datasim_fixedZ is a modified version of the simulation code
@@ -44,7 +44,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
 
   MCEM <- object
   # Run wcpm function and get ALL estimator
-  WCPM <- MCEM %>% run_wcpm(stu.data, pass.data=MCEM$pass.param, cases=case, perfect_season, est="ALL", lo = -4, hi = 4, q = 100, kappa = 1)
+  WCPM <- MCEM %>% run.wcpm(stu.data, pass.data=MCEM$pass.param, cases=case, perfect_season, est="all", hyperparam.out=TRUE, lo = -4, hi = 4, q = 100, kappa = 1)
   pass.data <- MCEM$pass.param
 
   # Extract relevant parameters for given case
@@ -140,9 +140,9 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
                         bse.theta.mle,
                         bse.tau.mle,
                         bse.wcpm.mle
-      )
+    )
 
-    } else if (est == "eap") {
+  } else if (est == "eap") {
     # For QUAD
     # Extract relevant latent param estimates
     Z.in <- c(WCPM$theta.eap,WCPM$tau.eap)

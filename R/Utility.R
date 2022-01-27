@@ -29,7 +29,7 @@
 #' @export
 prep <- function(data){
   # loading logger
-  log_initiating()
+  log.initiating()
   flog.info("Begin preparing data process", name = "mcemlog")
 
   dat <- data

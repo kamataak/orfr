@@ -9,11 +9,12 @@ wcpm(
   stu.data,
   pass.data = NA,
   cases = NA,
-  est = "MAP",
-  se = "Analytic",
+  est = "map",
+  se = "analytic",
   wo = "internal",
   failsafe = 0,
-  bootstrap = 100
+  bootstrap = 100,
+  hyperparam.out = FALSE
 )
 }
 \arguments{
@@ -25,15 +26,17 @@ wcpm(
 
 \item{cases}{- student id vectors}
 
-\item{est}{- estimator keyword / c("MLE", "MAP", "EAP")}
+\item{est}{- estimator keyword / c("mle", "map", "eap")}
 
-\item{se}{- standard error keyword / c("Analytic", "bootstrp")}
+\item{se}{- standard error keyword / c("analytic", "bootstrap")}
 
 \item{wo}{- wcpm option / c("internal", "external"), default is internal}
 
-\item{failsafe}{- retry time for bootstrp / default 0, can set to 5 ~ 50}
+\item{failsafe}{- retry time for bootstrap / default 0, can set to 5 ~ 50}
 
-\item{bootstrp}{- set K number of bootstrp / default 100}
+\item{hyperparam.out}{- hyper parameter output flag, default FALSE, if TRUE, output theta and tau}
+
+\item{bootstrp}{- set K number of bootstrap / default 100}
 }
 \value{
 WCPM list or Bootstrap dataset

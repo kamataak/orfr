@@ -6,29 +6,29 @@
 \usage{
 mcem(
   object,
-  K.in = 5,
+  k.in = 5,
   reps.in = 2,
   ests.in,
-  data_check = FALSE,
-  est = "MCEM",
-  se = "Analytic",
+  data.check = FALSE,
+  est = "mcem",
+  se = "analytic",
   verbose = FALSE
 )
 }
 \arguments{
 \item{object}{- reading data object comes from prep function}
 
-\item{K.in}{- number of passages, default is 5}
+\item{k.in}{- number of passages, default is 5}
 
 \item{reps.in}{- repeats, default is 2}
 
-\item{ests.in}{- if not give, mom function will be called and get est.in output}
+\item{ests.in}{- if not given, mom function will be called and get est.in output}
 
-\item{data_check}{- boolean, if need to have a data check, default is FALSE}
+\item{data.check}{- boolean, if need to have a data check, default is FALSE}
 
-\item{est}{- estimator keyword, MCEM or MCMC}
+\item{est}{- estimator keyword, mcem or mcmc}
 
-\item{se}{- standard error keyword, default is Analytic}
+\item{se}{- standard error keyword, default is analytic}
 
 \item{verbose}{- boolean, if shows the summary, default is FALSE}
 }

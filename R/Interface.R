@@ -29,11 +29,14 @@
 #' @return MCEM list, MCMC list
 #' @export
 mcem <- function(object,k.in=5,reps.in=2,ests.in,
-                     data.check=FALSE, est="mcem",se="analytic",verbose=FALSE) {
+                 data.check=FALSE, est="mcem",se="analytic",verbose=FALSE) {
+  # loading logger
+  log.initiating()
+
   if (est == "mcem") {
     dat <- object
     return(
-      run_mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,data.check,verbose=verbose)
+      run.mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,data.check,verbose=verbose)
     )
   } else { # for MCMC, mcem parameters are necessary
     # Check MCEM object
@@ -77,13 +80,14 @@ mcem <- function(object,k.in=5,reps.in=2,ests.in,
 #' @param wo - wcpm option / c("internal", "external"), default is internal
 #' @param failsafe - retry time for bootstrap / default 0, can set to 5 ~ 50
 #' @param bootstrp - set K number of bootstrap / default 100
+#' @param hyperparam.out - hyper parameter output flag, default FALSE, if TRUE, output theta and tau
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
 wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
-                     est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100) {
+                 est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, hyperparam.out=FALSE) {
   # loading logger
-  log_initiating()
+  log.initiating()
 
   # Check MCEM object
   if (wo=="internal") { # internal, object must be mcem object
@@ -118,7 +122,7 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
   bootstrap.out <- tibble()
   error_case <- tibble()
   if (se == "analytic") {
-    run_wcpm(object, stu.data, pass.data, cases, perfect_season, est, lo = -4, hi = 4, q = 100, kappa = 1)
+    run.wcpm(object, stu.data, pass.data, cases, perfect_season, est, hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1)
   } else if (se == "bootstrap"){ #for bootstrap
 
     RE_TRY <- failsafe # Define retry, if 0, no retry
