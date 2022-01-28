@@ -424,11 +424,7 @@ run.mcem <- function(Y,logT,N,I,k.in=5,reps.in=2,ests.in,data.check=FALSE,verbos
 #' @import MultiGHQuad
 #'
 #' @return wcpm list
-<<<<<<< HEAD
-run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MAP", hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1) {
-=======
 run.wcpm <- function(object, stu.data, pass.data, cases, perfect.season, est="map", hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1) {
->>>>>>> edit-names
   # loading logger
   log.initiating()
   flog.info("Begin wcpm process", name = "orfrlog")
@@ -614,18 +610,11 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.season, est="ma
     #   theta.est <- ests.map[1]
     #   tau.est <- ests.map[2]
     # }
-<<<<<<< HEAD
-    if (Estimator == "MLE") {
-      if (hyperparam.out) {
-        out <- tibble(stu_season_id=case, grade=grade,
-                      n.pass=n.pass, nwords.total=nwords.total,
-=======
     if (Estimator == "mle") {
 
       if (hyperparam.out) {
         out <- tibble(stu_season_id=case, grade=grade,
                       n.pass=n.pass, numwords.total=numwords.total,
->>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       tau.mle,
                       theta.mle,
@@ -634,26 +623,15 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.season, est="ma
                       wrc.mle=wrc.mle0, secs.mle=secs.mle0, wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
       } else { # no output for theta and tau
         out <- tibble(stu_season_id=case, grade=grade,
-<<<<<<< HEAD
-                      n.pass=n.pass, nwords.total=nwords.total,
-=======
                       n.pass=n.pass, numwords.total=numwords.total,
->>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       wrc.mle=wrc.mle0, secs.mle=secs.mle0, wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
 
       }
-<<<<<<< HEAD
-    } else if (Estimator == "MAP") {
-      if (hyperparam.out) {
-        out <- tibble(stu_season_id=case, grade=grade,
-                      n.pass=n.pass, nwords.total=nwords.total,
-=======
     } else if (Estimator == "map") {
       if (hyperparam.out) {
         out <- tibble(stu_season_id=case, grade=grade,
                       n.pass=n.pass, numwords.total=numwords.total,
->>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       tau.map=ests.map[2],
                       theta.map=ests.map[1],
@@ -663,16 +641,6 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.season, est="ma
                       wrc.map, secs.map, wcpm.map, se.wcpm.map)
       } else { # no output for theta and tau
         out <- tibble(stu_season_id=case, grade=grade,
-<<<<<<< HEAD
-                      n.pass=n.pass, nwords.total=nwords.total,
-                      wrc.obs, secs.obs, wcpm.obs,
-                      wrc.map, secs.map, wcpm.map, se.wcpm.map)
-      }
-    } else if (Estimator == "EAP") {
-      if (hyperparam.out) {
-        out <- tibble(stu_season_id=case, grade=grade,
-                      n.pass=n.pass, nwords.total=nwords.total,
-=======
                       n.pass=n.pass, numwords.total=numwords.total,
                       wrc.obs, secs.obs, wcpm.obs,
                       wrc.map, secs.map, wcpm.map, se.wcpm.map)
@@ -681,7 +649,6 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.season, est="ma
       if (hyperparam.out) {
         out <- tibble(stu_season_id=case, grade=grade,
                       n.pass=n.pass, numwords.total=numwords.total,
->>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       tau.eap = ests.quad[2],
                       theta.eap = ests.quad[1],
@@ -693,26 +660,16 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.season, est="ma
                       se.wcpm.eap = se.wcpm.quad)
       } else { # no output for theta and tau
         out <- tibble(stu_season_id=case, grade=grade,
-<<<<<<< HEAD
-                      n.pass=n.pass, nwords.total=nwords.total,
-=======
                       n.pass=n.pass, numwords.total=numwords.total,
->>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       wrc.eap = wrc.quad,
                       secs.eap = secs.quad,
                       wcpm.eap = wcpm.quad,
                       se.wcpm.eap = se.wcpm.quad)
       }
-<<<<<<< HEAD
-    } else if (Estimator == "ALL"){ # output all estimators
-      out <- tibble(stu_season_id=case, grade=grade,
-                    n.pass=n.pass, nwords.total=nwords.total,
-=======
     } else if (Estimator == "all"){ # output all estimators
       out <- tibble(stu_season_id=case, grade=grade,
                     n.pass=n.pass, numwords.total=numwords.total,
->>>>>>> edit-names
                     wrc.obs, secs.obs, wcpm.obs,
                     # tau.mle, tau.quad = est[2],
                     # theta.mle, theta.eap, theta.quad = est[1],

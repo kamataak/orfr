@@ -4,7 +4,7 @@
 \alias{plot.mcem}
 \title{Plot function to show graph of mcem class}
 \usage{
-\method{plot}{mcem}(object, X)
+\method{plot}{userdata}(object, X)
 }
 \arguments{
 \item{object}{= mcem object}

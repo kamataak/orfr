@@ -36,11 +36,7 @@ wcpm(
 
 \item{hyperparam.out}{- hyper parameter output flag, default FALSE, if TRUE, output theta and tau}
 
-<<<<<<< HEAD
-\item{bootstrp}{- set K number of bootstrp / default 100}
-=======
 \item{bootstrp}{- set K number of bootstrap / default 100}
->>>>>>> edit-names
 }
 \value{
 WCPM list or Bootstrap dataset
