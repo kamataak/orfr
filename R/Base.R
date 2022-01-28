@@ -16,7 +16,7 @@
 #' http://www.gnu.org/licenses/
 #'
 #'
-#' This is run_mcem function.
+#' This is run.mcem function.
 #' Update Memo:
 #' 04/29/2021 Modified the mcem function
 #'            based on Nelis's updated.
@@ -26,10 +26,10 @@
 #' @param logT    = n x I matrix of log(reading times) -- missingness allowed
 #' @param N       = vector of passage lengths
 #' @param I       = number of passages
-#' @param K.in    = number of passages, default is 5
+#' @param k.in    = number of passages, default is 5
 #' @param reps.in = Reps number, default is 2
 #' @param ests.in = if not give, mom function will be called and get est.in output
-#' @param data_check = boolean, if need to have a data check, default is FALSE
+#' @param data.check = boolean, if need to have a data check, default is FALSE
 #' @param verbose - boolean, if shows the summary, default is FALSE
 #'
 #' @import mvtnorm
@@ -43,13 +43,13 @@
 #' alpha,beta = parameters controlling reading times, each length I
 #' var_tau = variance of latent reading ability tau
 #' rho = correlation between two latent variables
-run_mcem <- function(Y,logT,N,I,K.in=5,reps.in=2,ests.in,data_check=FALSE,verbose=FALSE) {
+run.mcem <- function(Y,logT,N,I,k.in=5,reps.in=2,ests.in,data.check=FALSE,verbose=FALSE) {
   # loading logger
-  log_initiating()
+  log.initiating()
   flog.info("Begin mcem process", name = "orfrlog")
   flog.debug("Begin debug process", name = "orfrlog")
 
-  if (data_check) {
+  if (data.check) {
     # check data
     if (!is.array(Y)) {
       flog.warn("input scores data should be an array.", name="orfrlog")
@@ -266,7 +266,7 @@ run_mcem <- function(Y,logT,N,I,K.in=5,reps.in=2,ests.in,data_check=FALSE,verbos
     return(EM.ests)
   }
 
-  nK <- length(K.in)
+  nK <- length(k.in)
   if (missing(ests.in)) {
     ests.in <- mom(Y,logT,N,I)
   }
@@ -282,11 +282,11 @@ run_mcem <- function(Y,logT,N,I,K.in=5,reps.in=2,ests.in,data_check=FALSE,verbos
   n <- dim(Y)[1]
   z.in <- matrix(rep(0,n), nrow = n)
 
-  total.K <- rep(K.in[1],reps.in[1])
+  total.K <- rep(k.in[1],reps.in[1])
 
   if (nK > 1) {
     for (jj in 2:nK) {
-      total.K <- c(total.K,rep(K.in[jj],reps.in[jj]))
+      total.K <- c(total.K,rep(k.in[jj],reps.in[jj]))
     }
   }
   JJ <- length(total.K)
@@ -343,16 +343,16 @@ run_mcem <- function(Y,logT,N,I,K.in=5,reps.in=2,ests.in,data_check=FALSE,verbos
   td <- vartau.store
   se_vartau.store <- sapply(1:length(td[1,]),mf)
   pass.param <-  tibble(
-                        a = mean_a,
-                        b = mean_b,
-                        alpha = mean_alpha,
-                        beta = mean_beta,
-                        se_a = se_a.store,
-                        se_b = se_b.store,
-                        se_alpha = se_alpha.store,
-                        se_beta = se_beta.store,
-                        passage_id = as.numeric(colnames(Y)),
-                        nwords.p = N)
+    a = mean_a,
+    b = mean_b,
+    alpha = mean_alpha,
+    beta = mean_beta,
+    se_a = se_a.store,
+    se_b = se_b.store,
+    se_alpha = se_alpha.store,
+    se_beta = se_beta.store,
+    passage_id = as.numeric(colnames(Y)),
+    nwords.p = N)
   hyper.param <- tibble(vartau = colMeans(vartau.store),
                         rho = colMeans(rho.store),
                         se_vartau = se_vartau.store,
@@ -380,7 +380,7 @@ run_mcem <- function(Y,logT,N,I,K.in=5,reps.in=2,ests.in,data_check=FALSE,verbos
   #                                       alpha = mean_alpha,
   #                                       beta = mean_beta,
   #                                       nwords.p = N)
-                                    # )
+  # )
   # check if shows the summary
   if (verbose == TRUE) {
     summary.mcem(MCEM.ests)
@@ -390,7 +390,7 @@ run_mcem <- function(Y,logT,N,I,K.in=5,reps.in=2,ests.in,data_check=FALSE,verbos
   return(invisible(MCEM.ests))
 }
 
-#' This is run_wcpm function.
+#' This is run.wcpm function.
 #'
 #' Update Memo:
 #' 04/29/2021 Modified the wcpm function
@@ -407,8 +407,9 @@ run_mcem <- function(Y,logT,N,I,K.in=5,reps.in=2,ests.in,data_check=FALSE,verbos
 #' @param stu.data = estimate parameters data
 #' @param pass.data = student response passage data
 #' @param cases = student season id vector
-#' @param est - estimator, c("MLE", "MAP", "EAP"), default "MAP"
-#' @param perfect_season = perfect accurate case
+#' @param est - estimator, c("mle", "map", "eap"), default "map"
+#' @param perfect.season = perfect accurate case
+#' @param hyperparam.out - hyper parameter output flag
 #' @param lo = default -4
 #' @param hi = default 4
 #' @param q  = default 100
@@ -423,9 +424,13 @@ run_mcem <- function(Y,logT,N,I,K.in=5,reps.in=2,ests.in,data_check=FALSE,verbos
 #' @import MultiGHQuad
 #'
 #' @return wcpm list
+<<<<<<< HEAD
 run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MAP", hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1) {
+=======
+run.wcpm <- function(object, stu.data, pass.data, cases, perfect.season, est="map", hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1) {
+>>>>>>> edit-names
   # loading logger
-  log_initiating()
+  log.initiating()
   flog.info("Begin wcpm process", name = "orfrlog")
 
   # Check MCEM object
@@ -460,7 +465,7 @@ run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MA
     pass.read <- stu.dat01 %>% select(passage_id)
     pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage_id")
     n.pass <- nrow(pass.dat01)
-    nwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
+    numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
     grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
 
     wrc <- stu.dat01 %>% select(wrc) %>% c() %>% unlist()
@@ -524,7 +529,7 @@ run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MA
     }
 
     # only for non-perfect season case
-    if (!(case %in% perfect_season$stu_season_id2)) {
+    if (!(case %in% perfect.season$stu_season_id2)) {
       theta.mle <- uniroot(mod.pd1, c(-12, 12))$root
       eta <- a.par*theta.mle - b.par
       #se.theta.mle <- sum((a.par*nwords.p*dnorm(eta))/(pnorm(eta)*(1-pnorm(eta))))^(-0.5)
@@ -609,10 +614,18 @@ run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MA
     #   theta.est <- ests.map[1]
     #   tau.est <- ests.map[2]
     # }
+<<<<<<< HEAD
     if (Estimator == "MLE") {
       if (hyperparam.out) {
         out <- tibble(stu_season_id=case, grade=grade,
                       n.pass=n.pass, nwords.total=nwords.total,
+=======
+    if (Estimator == "mle") {
+
+      if (hyperparam.out) {
+        out <- tibble(stu_season_id=case, grade=grade,
+                      n.pass=n.pass, numwords.total=numwords.total,
+>>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       tau.mle,
                       theta.mle,
@@ -621,15 +634,26 @@ run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MA
                       wrc.mle=wrc.mle0, secs.mle=secs.mle0, wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
       } else { # no output for theta and tau
         out <- tibble(stu_season_id=case, grade=grade,
+<<<<<<< HEAD
                       n.pass=n.pass, nwords.total=nwords.total,
+=======
+                      n.pass=n.pass, numwords.total=numwords.total,
+>>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       wrc.mle=wrc.mle0, secs.mle=secs.mle0, wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
 
       }
+<<<<<<< HEAD
     } else if (Estimator == "MAP") {
       if (hyperparam.out) {
         out <- tibble(stu_season_id=case, grade=grade,
                       n.pass=n.pass, nwords.total=nwords.total,
+=======
+    } else if (Estimator == "map") {
+      if (hyperparam.out) {
+        out <- tibble(stu_season_id=case, grade=grade,
+                      n.pass=n.pass, numwords.total=numwords.total,
+>>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       tau.map=ests.map[2],
                       theta.map=ests.map[1],
@@ -639,6 +663,7 @@ run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MA
                       wrc.map, secs.map, wcpm.map, se.wcpm.map)
       } else { # no output for theta and tau
         out <- tibble(stu_season_id=case, grade=grade,
+<<<<<<< HEAD
                       n.pass=n.pass, nwords.total=nwords.total,
                       wrc.obs, secs.obs, wcpm.obs,
                       wrc.map, secs.map, wcpm.map, se.wcpm.map)
@@ -647,6 +672,16 @@ run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MA
       if (hyperparam.out) {
         out <- tibble(stu_season_id=case, grade=grade,
                       n.pass=n.pass, nwords.total=nwords.total,
+=======
+                      n.pass=n.pass, numwords.total=numwords.total,
+                      wrc.obs, secs.obs, wcpm.obs,
+                      wrc.map, secs.map, wcpm.map, se.wcpm.map)
+      }
+    } else if (Estimator == "eap") {
+      if (hyperparam.out) {
+        out <- tibble(stu_season_id=case, grade=grade,
+                      n.pass=n.pass, numwords.total=numwords.total,
+>>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       tau.eap = ests.quad[2],
                       theta.eap = ests.quad[1],
@@ -658,16 +693,26 @@ run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MA
                       se.wcpm.eap = se.wcpm.quad)
       } else { # no output for theta and tau
         out <- tibble(stu_season_id=case, grade=grade,
+<<<<<<< HEAD
                       n.pass=n.pass, nwords.total=nwords.total,
+=======
+                      n.pass=n.pass, numwords.total=numwords.total,
+>>>>>>> edit-names
                       wrc.obs, secs.obs, wcpm.obs,
                       wrc.eap = wrc.quad,
                       secs.eap = secs.quad,
                       wcpm.eap = wcpm.quad,
                       se.wcpm.eap = se.wcpm.quad)
       }
+<<<<<<< HEAD
     } else if (Estimator == "ALL"){ # output all estimators
       out <- tibble(stu_season_id=case, grade=grade,
                     n.pass=n.pass, nwords.total=nwords.total,
+=======
+    } else if (Estimator == "all"){ # output all estimators
+      out <- tibble(stu_season_id=case, grade=grade,
+                    n.pass=n.pass, numwords.total=numwords.total,
+>>>>>>> edit-names
                     wrc.obs, secs.obs, wcpm.obs,
                     # tau.mle, tau.quad = est[2],
                     # theta.mle, theta.eap, theta.quad = est[1],
@@ -730,6 +775,13 @@ run_wcpm <- function(object, stu.data, pass.data, cases, perfect_season, est="MA
                                             lo = -4, hi = 4, q = 100)},
                  mc.cores=numCores) %>%
         bind_rows()
+      #for test
+      # theta.tau <- foreach(i=1:seq_id_all, .combine = 'rbind', .packages = c("tidyverse", "MultiGHQuad")) %do%
+      #   { est.theta.tau(stu.data,
+      #                   pass.data,
+      #                   cases[i],
+      #                   lo, hi, q)
+      #   }
 
       class(theta.tau) <- "wcpm" #define wcpm class
       flog.info("End wcpm process - Mac or Linux ", name = "orfrlog")

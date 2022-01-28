@@ -29,7 +29,7 @@
 #' @export
 prep <- function(data){
   # loading logger
-  log_initiating()
+  log.initiating()
   flog.info("Begin preparing data process", name = "mcemlog")
 
   dat <- data
@@ -48,7 +48,7 @@ prep <- function(data){
     select(-student_id)
   N <- dat %>%
     group_by(passage_id) %>%
-    summarise(nwords.p=max(nwords.p)) %>%
+    summarise(numwords.pass=max(nwords.p)) %>%
     select(-passage_id)
   N <- pull(N)
   I <- length(N)
@@ -67,7 +67,7 @@ prep <- function(data){
 #' @return cases vector
 #'
 #' @export
-getCases <- function(data) {
+get.cases <- function(data) {
   cases <-
     data %>%
     .$stu_season_id2 %>% unique()
@@ -80,11 +80,11 @@ getCases <- function(data) {
 #' @return perfect accurate case vector
 #' @export
 #'
-getPerfectcase <- function(data) {
-  perfect_case <- data %>% group_by(stu_season_id2) %>%
+get.perfectcases <- function(data) {
+  perfect_cases <- data %>% group_by(stu_season_id2) %>%
     summarise(wrc_sum=sum(wrc),
-              nwords.p_sum=sum(nwords.p)) %>%
-    filter(wrc_sum == nwords.p_sum) %>%
+              numwords.pass_sum=sum(nwords.p)) %>%
+    filter(wrc_sum == numwords.pass_sum) %>%
     select(stu_season_id2)
-  return(invisible(perfect_case))
+  return(invisible(perfect_cases))
 }

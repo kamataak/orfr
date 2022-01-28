@@ -20,7 +20,7 @@
 #'
 #' @param time.data   #matrix, examinees X passages, raw time scale (in seconds)
 #' @param count.data   #matrix, examinees X passages, number of the words read correctly per passage
-#' @param n.words       #int. vec., vector of number of the words per passage!
+#' @param numwords.pass      #int. vec., vector of number of the words per passage!
 #' @param param     #chr. vec., which parameters to estimate. Default is only passage parameters!
 #' @param bayes.soft #chr., which software to use "jags" or "stan"?
 #' @param parallel #logical, run in parallel? "T" or "F"
@@ -38,7 +38,7 @@
 orf.bayes <- function(
   time.data=NA,  # matrix, examinees X passages, raw time scale (in seconds)
   count.data=NA, # matrix, examinees X passages, number of the words read correctly per passage
-  n.words=NA, #int. vec., vector of number of the words per passage!
+  numwords.pass=NA, #int. vec., vector of number of the words per passage!
   param=NA, # chr. vec., which parameters to estimate. Default is only passage parameters!
   bayes.soft="jags", # chr., which software to use "jags" or "stan"?
   parallel=T, #logical, run in parallel? "T" or "F"
@@ -53,7 +53,7 @@ orf.bayes <- function(
   #And bundle the data as a list
   J <- nrow(time.data)
   I <- ncol(time.data)
-  data.list <- list(J=J, I=I, tim=log(time.data), res=count.data, nw=n.words)
+  data.list <- list(J=J, I=I, tim=log(time.data), res=count.data, nw=numwords.pass)
 
   #Create a full name of the parameters as the default parameters to be estimated!
   if(is.na(param)){
@@ -270,11 +270,11 @@ runBayes <- function(Y,logT,N,I,K.in,reps.in,ests.in,data_check,est) {
   alpha_par <- c(8.710270, 4.758931, 6.478158, 5.063602, 4.408486, 3.935842, 6.277621, 5.858994, 6.820602)
   beta_par <- c(3.921922, 3.661640, 3.910936, 3.359062, 3.314531, 3.341339, 3.438361, 3.412690, 3.492000) #in raw scale, nor per 10 words!
 
-  n.words <- c(88, 69, 87, 50, 50, 49, 52, 51, 54)
+  numwords.pass <- c(88, 69, 87, 50, 50, 49, 52, 51, 54)
 
 
   J <- length(theta) # number of the examinees
-  I <- length(n.words) #number of the passages
+  I <- length(numwords.pass) #number of the passages
 
   a_rep <- rep(a_par, each=J)
   b_rep <- rep(b_par, each=J)
@@ -284,7 +284,7 @@ runBayes <- function(Y,logT,N,I,K.in,reps.in,ests.in,data_check,est) {
   theta_rep <- rep(theta, I)
   tau_rep <- rep(tau, I)
 
-  n.words_rep <- rep(n.words, each=J)
+  numwords.pass_rep <- rep(numwords.pass, each=J)
 
   #Generate Time data
   mu_time <- beta_rep - tau_rep
@@ -295,7 +295,7 @@ runBayes <- function(Y,logT,N,I,K.in,reps.in,ests.in,data_check,est) {
   #Generate count data
   #prb <- 1/(1+exp(-a_rep*(theta_rep-b_rep))) #Logit model
   prb <- pnorm(a_rep*(theta_rep-b_rep)) #Probit model
-  respon <- rbinom(n = J*I, size = n.words_rep, prob = prb)
+  respon <- rbinom(n = J*I, size = numwords.pass_rep, prob = prb)
   respon_mat <- matrix(respon, nc=I)
 }
 

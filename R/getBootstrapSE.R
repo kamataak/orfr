@@ -11,11 +11,11 @@
 #' @param est - SE type.(MLE, EAP, and MAP.) default MAP
 #' @param perfect_season - perfect accurate case
 #' @param kappa - Default kappa = 1, better be 5
-#' @param bootstrap - K number of bootstrp, default is 100
+#' @param bootstrap - K number of bootstrap, default is 100
 #'
 #' @return SE dataset
 getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP", kappa=1, bootstrap=100) {
-  log_initiating()
+  log.initiating()
   flog.info("Begin getBootstrapSE process", name = "orfrlog")
 
   # datasim_fixedZ is a modified version of the simulation code
@@ -44,7 +44,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
 
   MCEM <- object
   # Run wcpm function and get ALL estimator
-  WCPM <- MCEM %>% run_wcpm(stu.data, pass.data=MCEM$pass.param, cases=case, perfect_season, est="ALL", lo = -4, hi = 4, q = 100, kappa = 1)
+  WCPM <- MCEM %>% run.wcpm(stu.data, pass.data=MCEM$pass.param, cases=case, perfect_season, est="all", hyperparam.out=TRUE, lo = -4, hi = 4, q = 100, kappa = 1)
   pass.data <- MCEM$pass.param
 
   # Extract relevant parameters for given case
@@ -52,10 +52,10 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
   pass.read <- stu.dat01 %>% select(passage_id)
   pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage_id")
   n.pass <- nrow(pass.dat01)
-  nwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
+  numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
   grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
 
-  nwords.p <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist()
+  numwords.pass <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist()
 
   a.par <- pass.dat01 %>% select(a) %>% c() %>% unlist()
   b.par <- pass.dat01 %>% select(b) %>% c() %>% unlist()
@@ -68,18 +68,18 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
 
   flog.info(paste(paste("Output", est),"Bootstrap"), name = "orfrlog")
   if (bootstrap != 100)
-    flog.info(paste(paste("Set bootstrap K =", bootstrap),"Bootstrap"), name = "orfrlog")
+    flog.info(paste(paste("Set bootstrap K =", bootstrap),"bootstrap"), name = "orfrlog")
 
-  if (est == "MLE") {
+  if (est == "mle") {
     # Now, consider MLE as an example
     # Extract relevant latent param estimates
     Z.in <- c(WCPM$theta.mle,WCPM$tau.mle)
-    I <- length(nwords.p)
+    I <- length(numwords.pass)
 
     K <- bootstrap
     Z.est <- matrix(rep(0,4*K),ncol = 4)
 
-    new.data <- datasim.fixedZ(a.par,b.par,alpha.par,beta.par,vartau,rho,nwords.p,I,Z.in,K)
+    new.data <- datasim.fixedZ(a.par,b.par,alpha.par,beta.par,vartau,rho,numwords.pass,I,Z.in,K)
     for (k in 1:K) {
       wrc <- as.array(new.data$Y[k,])
       lgsec <- as.array(new.data$logT[k,])
@@ -89,7 +89,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
       mod.pd1 <- function(theta) {
         eta <- a.par*theta - b.par
         term1 <- sum(a.par*wrc*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE)))
-        term2 <- sum(a.par*(nwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
+        term2 <- sum(a.par*(numwords.pass-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
         pd1 <- term1 - term2
         return(pd1)
       }
@@ -102,10 +102,10 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
       if (!is.infinite(Z.in[1])) { #for non-perfect case
         theta.mle <- uniroot(mod.pd1, c(-12, 12))$root
         # MLE WCPM score
-        wrc.mle <- sum(nwords.p*pnorm(a.par*theta.mle - b.par))
-        secs.mle <- sum(exp(beta.par - log(10) + log(nwords.p) - tau.mle + ((1/alpha.par)^2)/2))
+        wrc.mle <- sum(numwords.pass*pnorm(a.par*theta.mle - b.par))
+        secs.mle <- sum(exp(beta.par - log(10) + log(numwords.pass) - tau.mle + ((1/alpha.par)^2)/2))
         wcpm.mle <- wrc.mle/secs.mle*60
-        k.theta <- sum(a.par*nwords.p*dnorm( a.par*theta.mle - b.par ))/sum(nwords.p*pnorm( a.par*theta.mle - b.par ))
+        k.theta <- sum(a.par*numwords.pass*dnorm( a.par*theta.mle - b.par ))/sum(numwords.pass*pnorm( a.par*theta.mle - b.par ))
       }
       Z.est[k,] <- c(theta.mle, tau.mle, wcpm.mle, k.theta)
     }
@@ -125,7 +125,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
     SE <- SE %>% select(stu_season_id,
                         grade,
                         n.pass,
-                        nwords.total,
+                        numwords.total,
                         wrc.obs,
                         secs.obs,
                         wcpm.obs,
@@ -140,18 +140,18 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
                         bse.theta.mle,
                         bse.tau.mle,
                         bse.wcpm.mle
-      )
+    )
 
-    } else if (est == "EAP") {
+  } else if (est == "eap") {
     # For QUAD
     # Extract relevant latent param estimates
     Z.in <- c(WCPM$theta.eap,WCPM$tau.eap)
-    I <- length(nwords.p)
+    I <- length(numwords.pass)
 
     K <- bootstrap # for QUAD 500 should be default?
     Z.est <- matrix(rep(0,4*K),ncol = 4)
 
-    new.data <- datasim.fixedZ(a.par,b.par,alpha.par,beta.par,vartau,rho,nwords.p,I,Z.in,K)
+    new.data <- datasim.fixedZ(a.par,b.par,alpha.par,beta.par,vartau,rho,numwords.pass,I,Z.in,K)
 
     # Bivariate EAP for theta and tau
     cov <- rho*sqrt(vartau)
@@ -163,7 +163,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
     loglik <- function(z) {
       theta <- z[1]
       tau <- z[2]
-      loglik.bi <- sum(dbinom(wrc, nwords.p, pnorm((a.par*theta)-b.par), log = T)) +
+      loglik.bi <- sum(dbinom(wrc, numwords.pass, pnorm((a.par*theta)-b.par), log = T)) +
         sum(dnorm(lgsec10, beta.par-tau, 1/alpha.par, log = T))
     }
 
@@ -175,10 +175,10 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
 
       ests.quad <- MultiGHQuad::eval.quad(loglik, grid)
       # QUAD WCPM score
-      wrc.quad <- sum(nwords.p*pnorm(a.par*ests.quad[1] - b.par))
-      secs.quad <- sum(exp(beta.par - log(10) + log(nwords.p) - ests.quad[2] + ((1/alpha.par)^2)/2))
+      wrc.quad <- sum(numwords.pass*pnorm(a.par*ests.quad[1] - b.par))
+      secs.quad <- sum(exp(beta.par - log(10) + log(numwords.pass) - ests.quad[2] + ((1/alpha.par)^2)/2))
       wcpm.quad <- wrc.quad/secs.quad*60
-      k.theta.quad <- sum(a.par*nwords.p*dnorm( a.par*ests.quad[1] - b.par ))/sum(nwords.p*pnorm( a.par*ests.quad[1] - b.par ))
+      k.theta.quad <- sum(a.par*numwords.pass*dnorm( a.par*ests.quad[1] - b.par ))/sum(numwords.pass*pnorm( a.par*ests.quad[1] - b.par ))
       Z.est[k,] <- c(ests.quad[1], ests.quad[2], wcpm.quad, k.theta.quad)
       # End of BiEAP
     }
@@ -196,7 +196,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
     SE <- SE %>% select(stu_season_id,
                         grade,
                         n.pass,
-                        nwords.total,
+                        numwords.total,
                         wrc.obs,
                         secs.obs,
                         wcpm.obs,
@@ -214,13 +214,13 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
     )
 
 
-  } else if (est == "MAP") {
+  } else if (est == "map") {
     Z.in <- c(WCPM$theta.map,WCPM$tau.map)
-    I <- length(nwords.p)
+    I <- length(numwords.pass)
     K <- bootstrap
     Z.est <- matrix(rep(0,4*K),ncol = 4)
 
-    new.data <- datasim.fixedZ(a.par,b.par,alpha.par,beta.par,vartau,rho,nwords.p,I,Z.in,K)
+    new.data <- datasim.fixedZ(a.par,b.par,alpha.par,beta.par,vartau,rho,numwords.pass,I,Z.in,K)
     #print(paste("kappa=", kappa))
 
     est.eqs <- function(latent.parms) {
@@ -230,7 +230,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
 
       ee1 <- -1/(kappa^2*(1-rho^2))*(theta-rho/sqrt(vartau)*tau) +
         sum(a.par*wrc*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE))) -
-        sum(a.par*(nwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
+        sum(a.par*(numwords.pass-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
       ee2 <- -1/(kappa^2*(1-rho^2))*(tau/vartau-rho/sqrt(vartau)*theta) -
         sum(alpha.par^2*(lgsec10 - beta.par + tau))
       ee <- c(ee1,ee2)
@@ -246,7 +246,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
       mod.pd1 <- function(theta) {
         eta <- a.par*theta - b.par
         term1 <- sum(a.par*wrc*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE)))
-        term2 <- sum(a.par*(nwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
+        term2 <- sum(a.par*(numwords.pass-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
         pd1 <- term1 - term2
         return(pd1)
       }
@@ -258,10 +258,10 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
       in.vals <- c(max(-5,min(5,theta.mle)),max(-5*sqrt(vartau),min(5*sqrt(vartau),tau.mle)))
       ests.map <- rootSolve::multiroot(est.eqs, in.vals)$root
       # MAP WCPM score
-      wrc.map <- sum(nwords.p*pnorm(a.par*ests.map[1] - b.par))
-      secs.map <- sum(exp(beta.par - log(10) + log(nwords.p) - ests.map[2] + ((1/alpha.par)^2)/2))
+      wrc.map <- sum(numwords.pass*pnorm(a.par*ests.map[1] - b.par))
+      secs.map <- sum(exp(beta.par - log(10) + log(numwords.pass) - ests.map[2] + ((1/alpha.par)^2)/2))
       wcpm.map <- wrc.map/secs.map*60
-      k.theta.map <- sum(a.par*nwords.p*dnorm( a.par*ests.map[1] - b.par ))/sum(nwords.p*pnorm( a.par*ests.map[1] - b.par ))
+      k.theta.map <- sum(a.par*numwords.pass*dnorm( a.par*ests.map[1] - b.par ))/sum(numwords.pass*pnorm( a.par*ests.map[1] - b.par ))
       Z.est[k,] <- c(ests.map[1], ests.map[2], wcpm.map, k.theta.map)
     }
     se.map <- apply(Z.est,2,sd)
@@ -278,7 +278,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
     SE <- SE %>% select(stu_season_id,
                         grade,
                         n.pass,
-                        nwords.total,
+                        numwords.total,
                         wrc.obs,
                         secs.obs,
                         wcpm.obs,

@@ -15,14 +15,14 @@
 #' A copy of the GNU General Public License is available at
 #' http://www.gnu.org/licenses/
 #'
-#' This is log_initiating function, which is used to log output.
+#' This is log.initiating function, which is used to log output.
 #'
 #' @import tryCatchLog
 #' @import futile.logger
 #'
 #'
 #'
-log_initiating <- function() {
+log.initiating <- function() {
 
 options(keep.source = TRUE) # source code file name and line number tracking
 options("tryCatchLog.write.error.dump.file" = FALSE)

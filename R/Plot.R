@@ -16,18 +16,18 @@
 #' A copy of the GNU General Public License is available at
 #' http://www.gnu.org/licenses/
 #'
-#' @param object = object
+#' @param object = mcem object
 #' @param X = dataset to plot
 #' @param ... = parameter
 #'
 #' @import psych
 #'
-#' @method plot mcem
+#' @method plot userdata
 #' @export
 plot.mcem <- function(object,X){
   data <- X
-  plot.it <- data.frame(Score=colMeans(dat$Y, na.rm=TRUE)/dat$N*10,
-                        Time.secs=colMeans(exp(dat$logT), na.rm=TRUE)/dat$N*10)
+  plot.it <- data.frame(Score=colMeans(data$Y, na.rm=TRUE)/data$N*10,
+                        Time.secs=colMeans(exp(data$logT), na.rm=TRUE)/data$N*10)
   pairs.panels(plot.it,
                method = "pearson",
                hist.col = "#00AFBB",

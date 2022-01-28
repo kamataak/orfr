@@ -7,6 +7,10 @@
 \method{summary}{bootstrap}(object, digits = 4, geterror = FALSE, verbose = TRUE)
 }
 \arguments{
+\item{object}{= bootstrap object}
+
+\item{digits}{= print out numeric with specific digits}
+
 \item{geterror, }{summary error case, default FALSE}
 
 \item{verbose}{show summary on screen, default TRUE}
