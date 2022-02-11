@@ -13,7 +13,7 @@ Maintainer: Kuo Wang <wangkuo@nifty.com>
 Description: Fit oral reading fluency (ORF) data to estimate parameters of an ORF psychometric model, including passage parameters and students' model-based fluency scores.
 License: GPL (>= 3)
 Encoding: UTF-8
-LazyData: false
+LazyData: true
 RoxygenNote: 7.1.2
 Imports: 
     tibble,rootSolve,tidyverse,tidyr,magrittr,doParallel,foreach,futile.logger,
@@ -24,3 +24,5 @@ Suggests:
 Config/testthat/edition: 3
 URL: https://github.com/kamataak/ModelBasedORF_Package
 BugReports: https://github.com/wangkuo08/ModelBasedORF_Package/issues
+Depends: 
+    R (>= 2.10)
