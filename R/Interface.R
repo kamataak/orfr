@@ -45,10 +45,11 @@ mcem <- function(object,k.in=5,reps.in=2,ests.in,
 
       MCEM <- object
       return(
-        runBayes(mcem=MCEM,cases)
+        #        runBayes(mcem=MCEM,cases)
       )
     } else { #run the whole process
-      runBayes(object=dat,mcem=MCEM,wcpm=WCPM,cases)
+      flog.info("Wrong parameters.", name = "orfrlog")
+      #      runBayes(object=dat,mcem=MCEM,wcpm=WCPM,cases)
     }
   }
 }
@@ -107,14 +108,10 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
   }
 
   # Check if there is a perfect accurate case
-  perfect_season <- stu.data %>% group_by(stu_season_id2) %>%
-    summarise(wrc_sum=sum(wrc),
-              nwords.p_sum=sum(nwords.p)) %>%
-    filter(wrc_sum == nwords.p_sum) %>%
-    select(stu_season_id2)
+  perfect.cases <- get.perfectcases(stu.data)
 
-  if (count(perfect_season) != 0) {
-    flog.info(paste("The perfect accurate case: ", perfect_season$stu_season_id2), name="orfrlog")
+  if (count(perfect.cases) != 0) {
+    flog.info(paste("The perfect accurate case: ", perfect.cases$perfect.cases), name="orfrlog")
   } else {
     flog.info("There is no perfect accurate case.", name="orfrlog")
   }
@@ -122,7 +119,7 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
   bootstrap.out <- tibble()
   error_case <- tibble()
   if (se == "analytic") {
-    run.wcpm(object, stu.data, pass.data, cases, perfect_season, est, hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1)
+    run.wcpm(object, stu.data, pass.data, cases, perfect.cases, est, hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1)
   } else if (se == "bootstrap"){ #for bootstrap
 
     RE_TRY <- failsafe # Define retry, if 0, no retry
@@ -135,7 +132,7 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
       temp <- tibble()
       flog.info(paste("Boostrap running for case:", cases[i]), name = "orfrlog")
       tryCatchLog(
-        temp <- getBootstrapSE(object, stu.data, case=cases[i], perfect_season, est, kappa=1,bootstrap=bootstrap),
+        temp <- getBootstrapSE(object, stu.data, case=cases[i], perfect.cases, est, kappa=1,bootstrap=bootstrap),
         error=function(e) {
           flog.info(paste("Running error:", e), name = "orfrlog")
         }

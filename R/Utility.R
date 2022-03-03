@@ -24,41 +24,100 @@
 #' @import dplyr
 #' @import tidyverse
 #'
-#' @return data list (Y, logT10, logT, N, I)
+#' @return data list (Y, logT10, N, I)
 #'
 #' @export
-prep <- function(data){
+prep <- function(data, vars="") {
   # loading logger
   log.initiating()
-  flog.info("Begin preparing data process", name = "mcemlog")
+  flog.info("Begin preparing data process", name = "orfrlog")
+  check_set <- c("id.student","occasion","id.passage","grade","numwords.pass","wrc","sec")
+  anydiff <- setdiff(vars,check_set)
+  if (length(anydiff) > 0) {
+    flog.info(paste("Variable incorrect:", anydiff), name = "orfrlog")
+    return
+  }
 
   dat <- data
-  Y <- dat %>%
-    select(student_id, passage_id, wrc) %>%
-    spread(key = passage_id, value = wrc) %>%
-    select(-student_id)
-  Y <- as.matrix(Y)
-  for (i in 1:ncol(Y)) {
-    Y[,i]<-ifelse(is.na(Y[,i]),NaN,Y[,i])
-  }
-  logT <- dat %>%
-    mutate(logsecs=log(secs)) %>%
-    select(student_id, passage_id, logsecs) %>%
-    spread(key = passage_id, value = logsecs) %>%
-    select(-student_id)
-  N <- dat %>%
-    group_by(passage_id) %>%
-    summarise(numwords.pass=max(nwords.p)) %>%
-    select(-passage_id)
-  N <- pull(N)
-  I <- length(N)
-  N.matrix <- matrix(rep(as.matrix(N),dim(Y)[1]),nrow = dim(Y)[1], byrow = TRUE)
-  logT10 <- logT - log(N.matrix) + log(10)
-  data.in <- list(Y = Y, logT10 = logT10, logT = logT, N = N, I = I)
 
-  flog.info("End preparing data process", name = "mcemlog")
-  #class(data.in) <- "prep"
-  return(data.in)
+  if (length(vars) > 0) {
+    # create_data
+    for (i in 1:length(vars)) {
+      #      print(i)
+      if (vars[i] == "id.student") {
+        c1 <- unname(dat[i])
+      } else if (vars[i] == 'id.passage') {
+        c2 <- unname(dat[i])
+      } else if (vars[i] == 'numwords.pass') {
+        c3 <- unname(dat[i])
+      } else if (vars[i] == 'occasion') {
+        c4 <- unname(dat[i])
+      } else if (vars[i] == 'grade') {
+        c5 <- unname(dat[i])
+      } else if (vars[i] == 'sec') {
+        c6 <- unname(dat[i])
+        lgsec <- log(c6)
+      } else if (vars[i] == 'wrc') {
+        c7 <- unname(dat[i])
+      }
+    }
+
+    dat <- data.frame(student.id=c1,
+                      passage.id=c2,
+                      nwords.p=c3,
+                      occasion=c4,
+                      grade=c5,
+                      sec=c6,
+                      wrc=c7,
+                      lgsec)
+
+  }
+
+  tryCatch(
+    expr = {
+      Y <- dat %>% select(student.id, passage.id, wrc) %>%
+        pivot_wider(names_from = passage.id, values_from = wrc) %>%
+        select(-student.id)
+      Y <- Y[ , order(names(Y))] # sort by passage.id
+      Y <- as.matrix(Y)
+      for (i in 1:ncol(Y)) {
+        Y[,i]<-ifelse(is.na(Y[,i]),NaN,Y[,i])
+      }
+      logT <- dat %>%
+        mutate(lgsec=log(sec)) %>%
+        select(student.id, passage.id, lgsec) %>%
+        pivot_wider(names_from = passage.id, values_from = lgsec) %>%
+        select(-student.id)
+      logT <- logT[ , order(names(logT))] # sort by passage.id
+      N <- dat %>%
+        group_by(passage.id) %>% arrange(passage.id) %>% # sort by passage.id
+        summarise(numwords.pass=max(nwords.p)) %>%
+        select(-passage.id)
+      N <- pull(N)
+      I <- length(N)
+      N.matrix <- matrix(rep(as.matrix(N),dim(Y)[1]),nrow = dim(Y)[1], byrow = TRUE)
+      logT10 <- logT - log(N.matrix) + log(10)
+      logT10 <- logT10[ , order(names(logT10))]
+      # data.in <- list(Y = Y, logT10 = logT10, logT = logT, N = N, I = I)
+      data.in <- list(Y = Y, logT10 = logT10, N = N, I = I)
+    },
+    warning = function(w) {
+      flog.info("There was a warning message. Something is wrong!", name = "orfrlog")
+      flog.info(w, name = "orfrlog")
+    },
+    error = function(w) {
+      flog.info("There was an error message. Something is wrong!", name = "orfrlog")
+      flog.info(w, name = "orfrlog")
+    }
+  )
+
+
+  output <- list(data.raw=dat,
+                 data.in=data.in)
+  flog.info("End preparing data process", name = "orfrlog")
+
+  return(output)
+
 }
 #' The function get return cases used for wcpm function
 #'
@@ -68,9 +127,9 @@ prep <- function(data){
 #'
 #' @export
 get.cases <- function(data) {
-  cases <-
-    data %>%
-    .$stu_season_id2 %>% unique()
+  cases <- data %>% select(student.id,occasion) %>% unique() %>%
+    unite("cases", student.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
+    select(cases)
   return(invisible(cases))
 }
 #' The function get perfect accurate cases
@@ -81,10 +140,11 @@ get.cases <- function(data) {
 #' @export
 #'
 get.perfectcases <- function(data) {
-  perfect_cases <- data %>% group_by(stu_season_id2) %>%
+  perfect.cases <- data %>% group_by(student.id,occasion) %>%
     summarise(wrc_sum=sum(wrc),
-              numwords.pass_sum=sum(nwords.p)) %>%
-    filter(wrc_sum == numwords.pass_sum) %>%
-    select(stu_season_id2)
-  return(invisible(perfect_cases))
+              nwords.p_sum=sum(nwords.p), .groups = "drop_last") %>%
+    filter(wrc_sum == nwords.p_sum) %>%
+    unite("perfect.cases", student.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
+    select(perfect.cases)
+  return(invisible(perfect.cases))
 }
