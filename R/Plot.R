@@ -22,7 +22,7 @@
 #'
 #' @import psych
 #'
-#' @method plot userdata
+#' @method plot mcem
 #' @export
 plot.mcem <- function(object,X){
   data <- X
