@@ -1,11 +1,10 @@
 Package: orfr
 Type: Package
 Title: The Model-based Approach to ORF Assessment Data 
-Version: 0.0.1
+Version: 0.0.0.9000
 Author: c(
     person("Akihito", "Kamata", email = "", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-9570-1464")),
     person("Cornelis J.", "Potgieter", email = "c.potgieter@tcu.edu", role = "aut"),
-    person("Joseph F.", "Nese", email = "jnese@uoregon.edu", role = "aut"),
     person("Yusuf", "Kara", email = "", role = "aut",  comment = c(ORCID = "0000-0003-0691-0630")),
     person("Sarunya", "Somsong", email = "sarunya.ss@hotmail.com", role = "aut", comment = c(ORCID = "0000-0002-4974-7346")),
     person("Kuo", "Wang", email = "wangkuo@nifty.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-4925-0591"))
