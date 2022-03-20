@@ -10,7 +10,7 @@ getBootstrapSE(
   stu.data,
   case = NA,
   perfect_season,
-  est = "MAP",
+  est = "map",
   kappa = 1,
   bootstrap = 100
 )

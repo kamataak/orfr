@@ -14,7 +14,7 @@
 #' @param bootstrap - K number of bootstrap, default is 100
 #'
 #' @return SE dataset
-getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP", kappa=1, bootstrap=100) {
+getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="map", kappa=1, bootstrap=100) {
   log.initiating()
   flog.info("Begin getBootstrapSE process", name = "orfrlog")
 
@@ -27,18 +27,20 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
     sigma <- matrix(c(1,s12,s12,var_tau), ncol=2)
     Y <- matrix(nrow = reps, ncol = I)
     logT10 <- matrix(nrow = reps, ncol = I)
-    logT <- matrix(nrow = reps, ncol = I)
+    # logT <- matrix(nrow = reps, ncol = I)
     p.store <- matrix(nrow = reps, ncol = I)
     for (i in 1:reps) {
       p <- pnorm(a*Z.latent[1]-b)
       Y.in <- mapply(function(n,p) rbinom(1,n,p), N, p)
       logT10.in <- 1/alpha*rnorm(I)+beta-Z.latent[2]
-      logT.in <- logT10.in - log(10) + log(N)
+      # logT.in <- logT10.in - log(10) + log(N)
       Y[i,] <- Y.in
       logT10[i,] <- logT10.in
-      logT[i,] <- logT.in
+      # logT[i,] <- logT.in
     }
-    data <- list(Y = Y,logT10 = logT10, logT = logT)
+    data <- list(Y = Y,logT10 = logT10)
+    # data <- list(Y = Y,logT10 = logT10, logT = logT)
+
     return(data)
   }
 
@@ -82,7 +84,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
     new.data <- datasim.fixedZ(a.par,b.par,alpha.par,beta.par,vartau,rho,numwords.pass,I,Z.in,K)
     for (k in 1:K) {
       wrc <- as.array(new.data$Y[k,])
-      lgsec <- as.array(new.data$logT[k,])
+      # lgsec <- as.array(new.data$logT[k,])
       lgsec10 <- as.array(new.data$logT10[k,])
 
       tau.mle <- sum(alpha.par^2*(beta.par - lgsec10))/sum(alpha.par^2)
@@ -239,7 +241,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
 
     for (k in 1:K) {
       wrc <- as.array(new.data$Y[k,])
-      lgsec <- as.array(new.data$logT[k,])
+      # lgsec <- as.array(new.data$logT[k,])
       lgsec10 <- as.array(new.data$logT10[k,])
 
       tau.mle <- sum(alpha.par^2*(beta.par - lgsec10))/sum(alpha.par^2)
