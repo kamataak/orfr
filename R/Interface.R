@@ -28,10 +28,15 @@
 #'
 #' @return MCEM list, MCMC list
 #' @export
-mcem <- function(object,k.in=5,reps.in=2,ests.in,
+mcem <- function(object, studentid="",passageid="",nwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in,
                  data.check=FALSE, est="mcem",se="analytic",verbose=FALSE) {
   # loading logger
   log.initiating()
+
+  if (studentid != "") {
+    #create wide data
+    object <- prepwide(object,studentid,passageid,nwords.p,wrc,time)
+  }
 
   if (est == "mcem") {
     dat <- object
@@ -85,10 +90,20 @@ mcem <- function(object,k.in=5,reps.in=2,ests.in,
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
-wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
+wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="",wrc="",time="", stu.data=data, pass.data=NA, cases=NA,
                  est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, hyperparam.out=FALSE) {
   # loading logger
   log.initiating()
+  # if (studentid != "" & class(object)[1] != "mcem" ) {
+
+  if (class(object)[1] != "mcem" ) {
+    #call mcem
+    MCEM <- mcem(object,studentid,passageid,nwords.p,wrc,time,est="mcem")
+    #create long data
+    stu.data <- preplong(object,studentid,passageid,season,grade,nwords.p,wrc,time)
+    pass.data <- MCEM$pass.param
+    object <- MCEM
+  }
 
   # Check MCEM object
   if (wo=="internal") { # internal, object must be mcem object
@@ -126,13 +141,14 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
     j <- 0 # index for retry time
     i <- 1 # index for case loop
 
-    t_size <- length(cases)
+    t_size <- nrow(cases)
 
     while (i <= t_size) {
       temp <- tibble()
-      flog.info(paste("Boostrap running for case:", cases[i]), name = "orfrlog")
+      flog.info(paste("Boostrap running for case:", cases$cases[i]), name = "orfrlog")
+      t_case = data.frame(cases=cases$cases[i])
       tryCatchLog(
-        temp <- getBootstrapSE(object, stu.data, case=cases[i], perfect.cases, est, kappa=1,bootstrap=bootstrap),
+        temp <- getBootstrapSE(object, stu.data, case=t_case, perfect.cases, est, kappa=1,bootstrap=bootstrap),
         error=function(e) {
           flog.info(paste("Running error:", e), name = "orfrlog")
         }
@@ -144,7 +160,7 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
         i <- i + 1 # go to next case
       } else { # with error
         if (j == RE_TRY) { # after RE_TRY if still error
-          error_temp <- tibble(case_id = cases[i])
+          error_temp <- tibble(case_id = cases$cases[i])
           error_case <- rbind(error_case, error_temp)
           i <- i + 1 # go to next case
         } else {

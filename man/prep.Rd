@@ -4,13 +4,13 @@
 \alias{prep}
 \title{This file includes utilities of orfr package.}
 \usage{
-prep(data)
+prep(data, vars = "")
 }
 \arguments{
 \item{data}{= student response data}
 }
 \value{
-data list (Y, logT10, logT, N, I)
+data list (Y, logT10, N, I)
 }
 \description{
 Copyright (C) 2021 The ORF Project Team

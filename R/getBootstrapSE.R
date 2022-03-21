@@ -48,12 +48,21 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
   pass.data <- MCEM$pass.param
 
   # Extract relevant parameters for given case
-  stu.dat01 <- stu.data %>% filter(stu_season_id2==case)
-  pass.read <- stu.dat01 %>% select(passage_id)
-  pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage_id")
+  # stu.dat01 <- stu.data %>% filter(stu_season_id2==case)
+  # pass.read <- stu.dat01 %>% select(passage_id)
+  # pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage_id")
+  # n.pass <- nrow(pass.dat01)
+  # numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
+  # grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
+
+  case_split <- unlist(str_split(case, "_"))
+  stu.dat01 <- stu.data %>% filter(stu.data$student.id==case_split[1], stu.data$occasion==case_split[2])
+  pass.read <- stu.dat01 %>% select(passage.id)
+  pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage.id")
   n.pass <- nrow(pass.dat01)
   numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
   grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
+
 
   numwords.pass <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist()
 
@@ -122,7 +131,8 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
                               bse.theta.mle=se.mle[1],
                               bse.tau.mle=se.mle[2],
                               bse.wcpm.mle=se.wcpm.mle))
-    SE <- SE %>% select(stu_season_id,
+    SE <- SE %>% select(student.id,
+                        occasion,
                         grade,
                         n.pass,
                         numwords.total,
@@ -193,7 +203,8 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
                               bse.theta.eap=se.quad[1],
                               bse.tau.eap=se.quad[2],
                               bse.wcpm.eap=se.wcpm.quad))
-    SE <- SE %>% select(stu_season_id,
+    SE <- SE %>% select(student.id,
+                        occasion,
                         grade,
                         n.pass,
                         numwords.total,
@@ -275,7 +286,8 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="MAP"
                               bse.theta.map=se.map[1],
                               bse.tau.map=se.map[2],
                               bse.wcpm.map=se.wcpm.map))
-    SE <- SE %>% select(stu_season_id,
+    SE <- SE %>% select(student.id,
+                        occasion,
                         grade,
                         n.pass,
                         numwords.total,

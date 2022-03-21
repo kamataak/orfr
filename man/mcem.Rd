@@ -6,6 +6,11 @@
 \usage{
 mcem(
   object,
+  studentid = "",
+  passageid = "",
+  nwords.p = "",
+  wrc = "",
+  time = "",
   k.in = 5,
   reps.in = 2,
   ests.in,

@@ -112,8 +112,8 @@ prep <- function(data, vars="") {
   )
 
 
-  output <- list(data.raw=dat,
-                 data.in=data.in)
+  output <- list(data.long=dat,
+                 data.wide=data.in)
   flog.info("End preparing data process", name = "orfrlog")
 
   return(output)
@@ -147,4 +147,58 @@ get.perfectcases <- function(data) {
     unite("perfect.cases", student.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
     select(perfect.cases)
   return(invisible(perfect.cases))
+}
+#' The function returns wide format data for mcpm function
+#'
+#' @param data = student response data
+#'
+#' @return list
+#'
+#' @export
+prepwide <- function(data,studentid,passageid,nwords.p,wrc,time){
+  vars <- c(studentid,passageid,nwords.p,wrc,time)
+  dat <- data %>%
+    select(all_of(vars))
+  Y <- dat %>%
+    select(vars[1], vars[2], vars[4]) %>%
+    spread(key = vars[2], value = vars[4]) %>%
+    select(-vars[1])
+  Y <- as.matrix(Y)
+  for (i in 1:ncol(Y)) {
+    Y[,i]<-ifelse(is.na(Y[,i]),NaN,Y[,i])
+  }
+  logT <- dat %>%
+    mutate(logsecs=log(.[[5]])) %>%
+    select(vars[1], vars[2], logsecs) %>%
+    spread(key = vars[2], value = logsecs) %>%
+    select(-vars[1])
+  N <- dat %>%
+    group_by_at(2) %>%
+    summarise_at(3,max) %>%
+    select(-vars[2])
+  N <- pull(N)
+  I <- length(N)
+  N.matrix <- matrix(rep(as.matrix(N),dim(Y)[1]),nrow = dim(Y)[1], byrow = TRUE)
+  logT10 <- tibble(logT - log(N.matrix) + log(10))
+  data.in <- list(Y = Y, logT10 = logT10, N = N, I = I)
+  return(data.in)
+}
+#' The function returns long format data for wcpm function
+#'
+#' @param data = student response data
+#'
+#' @return data frame
+#'
+#' @export
+preplong <- function(data,studentid,passageid,season,grade,nwords.p,wrc,time){
+  vars <- c(studentid,passageid,season,grade,nwords.p,wrc,time)
+  dat <- data %>%
+    select(all_of(vars)) %>%
+    rename(student.id=1,passage.id=2,
+           occasion=3,grade=4,
+           nwords.p=5,wrc=6,sec=7) %>%
+    mutate(lgsec=log(.[[7]]))
+  #lgsec10 = log(.[[7]] - log(.[[5]]) + log(10)
+  #           stu_season_id2=paste(.[[1]],.[[3]],sep="_"))
+  return(dat)
 }
