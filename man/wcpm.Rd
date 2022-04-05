@@ -6,7 +6,14 @@
 \usage{
 wcpm(
   object,
-  stu.data,
+  studentid = "",
+  passageid = "",
+  season = "",
+  grade = "",
+  nwords.p = "",
+  wrc = "",
+  time = "",
+  stu.data = data,
   pass.data = NA,
   cases = NA,
   est = "map",

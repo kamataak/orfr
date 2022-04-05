@@ -28,10 +28,15 @@
 #'
 #' @return MCEM list, MCMC list
 #' @export
-mcem <- function(object,k.in=5,reps.in=2,ests.in,
+mcem <- function(object, studentid="",passageid="",nwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in,
                  data.check=FALSE, est="mcem",se="analytic",verbose=FALSE) {
   # loading logger
   log.initiating()
+
+  if (studentid != "") {
+    #create wide data
+    object <- prepwide(object,studentid,passageid,nwords.p,wrc,time)
+  }
 
   if (est == "mcem") {
     dat <- object
@@ -45,10 +50,11 @@ mcem <- function(object,k.in=5,reps.in=2,ests.in,
 
       MCEM <- object
       return(
-        runBayes(mcem=MCEM,cases)
+        #        runBayes(mcem=MCEM,cases)
       )
     } else { #run the whole process
-      runBayes(object=dat,mcem=MCEM,wcpm=WCPM,cases)
+      flog.info("Wrong parameters.", name = "orfrlog")
+      #      runBayes(object=dat,mcem=MCEM,wcpm=WCPM,cases)
     }
   }
 }
@@ -84,10 +90,20 @@ mcem <- function(object,k.in=5,reps.in=2,ests.in,
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
-wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
+wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="",wrc="",time="", stu.data=data, pass.data=NA, cases=NA,
                  est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, hyperparam.out=FALSE) {
   # loading logger
   log.initiating()
+  # if (studentid != "" & class(object)[1] != "mcem" ) {
+
+  if (class(object)[1] != "mcem" ) {
+    #call mcem
+    MCEM <- mcem(object,studentid,passageid,nwords.p,wrc,time,est="mcem")
+    #create long data
+    stu.data <- preplong(object,studentid,passageid,season,grade,nwords.p,wrc,time)
+    pass.data <- MCEM$pass.param
+    object <- MCEM
+  }
 
   # Check MCEM object
   if (wo=="internal") { # internal, object must be mcem object
@@ -107,14 +123,10 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
   }
 
   # Check if there is a perfect accurate case
-  perfect_season <- stu.data %>% group_by(stu_season_id2) %>%
-    summarise(wrc_sum=sum(wrc),
-              nwords.p_sum=sum(nwords.p)) %>%
-    filter(wrc_sum == nwords.p_sum) %>%
-    select(stu_season_id2)
+  perfect.cases <- get.perfectcases(stu.data)
 
-  if (count(perfect_season) != 0) {
-    flog.info(paste("The perfect accurate case: ", perfect_season$stu_season_id2), name="orfrlog")
+  if (count(perfect.cases) != 0) {
+    flog.info(paste("The perfect accurate case: ", perfect.cases$perfect.cases), name="orfrlog")
   } else {
     flog.info("There is no perfect accurate case.", name="orfrlog")
   }
@@ -122,20 +134,21 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
   bootstrap.out <- tibble()
   error_case <- tibble()
   if (se == "analytic") {
-    run.wcpm(object, stu.data, pass.data, cases, perfect_season, est, hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1)
+    run.wcpm(object, stu.data, pass.data, cases, perfect.cases, est, hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1)
   } else if (se == "bootstrap"){ #for bootstrap
 
     RE_TRY <- failsafe # Define retry, if 0, no retry
     j <- 0 # index for retry time
     i <- 1 # index for case loop
 
-    t_size <- length(cases)
+    t_size <- nrow(cases)
 
     while (i <= t_size) {
       temp <- tibble()
-      flog.info(paste("Boostrap running for case:", cases[i]), name = "orfrlog")
+      flog.info(paste("Boostrap running for case:", cases$cases[i]), name = "orfrlog")
+      t_case = data.frame(cases=cases$cases[i])
       tryCatchLog(
-        temp <- getBootstrapSE(object, stu.data, case=cases[i], perfect_season, est, kappa=1,bootstrap=bootstrap),
+        temp <- getBootstrapSE(object, stu.data, case=t_case, perfect.cases, est, kappa=1,bootstrap=bootstrap),
         error=function(e) {
           flog.info(paste("Running error:", e), name = "orfrlog")
         }
@@ -147,7 +160,7 @@ wcpm <- function(object, stu.data, pass.data=NA, cases=NA,
         i <- i + 1 # go to next case
       } else { # with error
         if (j == RE_TRY) { # after RE_TRY if still error
-          error_temp <- tibble(case_id = cases[i])
+          error_temp <- tibble(case_id = cases$cases[i])
           error_case <- rbind(error_case, error_temp)
           i <- i + 1 # go to next case
         } else {
