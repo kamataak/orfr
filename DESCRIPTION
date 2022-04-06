@@ -1,7 +1,7 @@
 Package: orfr
 Type: Package
 Title: The Model-based Approach to ORF Assessment Data 
-Version: 0.1.1
+Version: 1.0.0
 Author: c(
     person("Akihito", "Kamata", email = "", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-9570-1464")),
     person("Cornelis J.", "Potgieter", email = "c.potgieter@tcu.edu", role = "aut"),
@@ -19,11 +19,11 @@ RoxygenNote: 7.1.2
 Imports: 
     tibble,rootSolve,tidyverse,tidyr,magrittr,doParallel,foreach,futile.logger,
     greekLetters,mvtnorm,MultiGHQuad,psych,
-    nleqslv,tryCatchLog,rstan,runjags,dplyr
+    nleqslv,tryCatchLog,rstan,runjags,dplyr,parallel
 Suggests: 
     testthat (>= 3.5.0)
 Config/testthat/edition: 3
 URL: https://github.com/kamataak/ModelBasedORF_Package
 BugReports: https://github.com/kamataak/orfr/issues
 Depends: 
-    R (>= 4.0.2)
+    R (>= 2.10)
