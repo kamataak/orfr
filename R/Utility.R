@@ -24,7 +24,8 @@
 #' @import dplyr
 #' @import tidyverse
 #'
-#' @return data list (Y, logT10, N, I)
+#' @return data list (data.long: data frame,
+#'                    data.wide: list of Y, logT10, N, I)
 #'
 #' @export
 prep <- function(data, vars="") {
@@ -98,7 +99,7 @@ prep <- function(data, vars="") {
       N.matrix <- matrix(rep(as.matrix(N),dim(Y)[1]),nrow = dim(Y)[1], byrow = TRUE)
       logT10 <- logT - log(N.matrix) + log(10)
       logT10 <- logT10[ , order(names(logT10))]
-      # data.in <- list(Y = Y, logT10 = logT10, logT = logT, N = N, I = I)
+      # data.in <- list(Y = Y, logT10 = logT10, N = N, I = I)
       data.in <- list(Y = Y, logT10 = logT10, N = N, I = I)
     },
     warning = function(w) {

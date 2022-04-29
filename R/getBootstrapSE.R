@@ -9,12 +9,12 @@
 #' @param stu.data - student response data
 #' @param case - case number
 #' @param est - SE type.(MLE, EAP, and MAP.) default MAP
-#' @param perfect_season - perfect accurate case
+#' @param perfect.cases - perfect accurate case
 #' @param kappa - Default kappa = 1, better be 5
 #' @param bootstrap - K number of bootstrap, default is 100
 #'
 #' @return SE dataset
-getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="map", kappa=1, bootstrap=100) {
+getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map", kappa=1, bootstrap=100) {
   log.initiating()
   flog.info("Begin getBootstrapSE process", name = "orfrlog")
 
@@ -46,7 +46,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect_season, est="map"
 
   MCEM <- object
   # Run wcpm function and get ALL estimator
-  WCPM <- MCEM %>% run.wcpm(stu.data, pass.data=MCEM$pass.param, cases=case, perfect_season, est="all", hyperparam.out=TRUE, lo = -4, hi = 4, q = 100, kappa = 1)
+  WCPM <- MCEM %>% run.wcpm(stu.data, pass.data=MCEM$pass.param, cases=case, perfect.cases, est="all", hyperparam.out=TRUE, lo = -4, hi = 4, q = 100, kappa = 1)
   pass.data <- MCEM$pass.param
 
   # Extract relevant parameters for given case

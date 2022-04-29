@@ -14,7 +14,6 @@ mcem(
   k.in = 5,
   reps.in = 2,
   ests.in,
-  data.check = FALSE,
   est = "mcem",
   se = "analytic",
   verbose = FALSE
@@ -28,8 +27,6 @@ mcem(
 \item{reps.in}{- repeats, default is 2}
 
 \item{ests.in}{- if not given, mom function will be called and get est.in output}
-
-\item{data.check}{- boolean, if need to have a data check, default is FALSE}
 
 \item{est}{- estimator keyword, mcem or mcmc}
 

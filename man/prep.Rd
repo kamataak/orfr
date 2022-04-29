@@ -10,7 +10,8 @@ prep(data, vars = "")
 \item{data}{= student response data}
 }
 \value{
-data list (Y, logT10, N, I)
+data list (data.long: data frame,
+                   data.wide: list of Y, logT10, N, I)
 }
 \description{
 Copyright (C) 2021 The ORF Project Team

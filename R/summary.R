@@ -124,7 +124,7 @@ summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE) {
       print(z$error_case)
       return(invisible(z$error_case))
     } else {
-      print("Bootstrap has not error cases.")
+      print("Bootstrap has no error cases.")
     }
   } else {
     if (ncol(tb) != 0) {

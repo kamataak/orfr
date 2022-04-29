@@ -23,13 +23,12 @@
 #' 10/28/2021 Modified the mcem output
 #'
 #' @param Y       = n x I matrix of reading scores -- missingness allowed
-#' @param logT10    = n x I matrix of log10(reading times) -- missingness allowed
+#' @param logT10  = n x I matrix of log10(reading times) -- missingness allowed
 #' @param N       = vector of passage lengths
 #' @param I       = number of passages
 #' @param k.in    = number of passages, default is 5
 #' @param reps.in = Reps number, default is 2
 #' @param ests.in = if not give, mom function will be called and get est.in output
-#' @param data.check = boolean, if need to have a data check, default is FALSE
 #' @param verbose - boolean, if shows the summary, default is FALSE
 #'
 #' @import mvtnorm
@@ -43,29 +42,10 @@
 #' alpha,beta = parameters controlling reading times, each length I
 #' var_tau = variance of latent reading ability tau
 #' rho = correlation between two latent variables
-run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,data.check=FALSE,verbose=FALSE) {
+run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,verbose=FALSE) {
   # loading logger
   log.initiating()
   flog.info("Begin mcem process", name = "orfrlog")
-  flog.debug("Begin debug process", name = "orfrlog")
-
-  if (data.check) {
-    # check data
-    if (!is.array(Y)) {
-      flog.warn("input scores data should be an array.", name="orfrlog")
-      return(NULL)
-    }
-    if (!is.array(logT10)) {
-      flog.warn("input time data should be an array.", name="orfrlog")
-      return(NULL)
-    }
-    if (length(N) != I | length(Y[1,]) != I) {
-      flog.warn("The length of passage score is incorrect!", name="orfrlog")
-      return(NULL)
-    }
-  } else {
-    flog.info("No data check", name = "orfrlog")
-  }
 
   evaluate_rho <- function(data,par) {
     R <- data[1]
@@ -408,7 +388,7 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,data.check=FALSE,verb
 #' @param pass.data = student response passage data
 #' @param cases = student season id vector
 #' @param est - estimator, c("mle", "map", "eap"), default "map"
-#' @param perfect.season = perfect accurate case
+#' @param perfect.cases = perfect accurate case
 #' @param hyperparam.out - hyper parameter output flag
 #' @param lo = default -4
 #' @param hi = default 4
@@ -436,19 +416,6 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     flog.info("Missed MCEM object, end wcpm process", name = "orfrlog")
     return(NULL)
   }
-
-  # Check if there is a perfect accurate case
-  # perfect_season <- stu.data %>% group_by(stu_season_id2) %>%
-  #   summarise(wrc_sum=sum(wrc),
-  #             nwords.p_sum=sum(nwords.p)) %>%
-  #   filter(wrc_sum == nwords.p_sum) %>%
-  #   select(stu_season_id2)
-  #
-  # if (count(perfect_season) != 0) {
-  #   flog.info(paste("The perfect accurate case: ", perfect_season$stu_season_id2), name="orfrlog")
-  # } else {
-  #   flog.info("There is no perfect accurate case.", name="orfrlog")
-  # }
 
 
   # get estimator type

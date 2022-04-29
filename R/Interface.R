@@ -21,7 +21,6 @@
 #' @param k.in - number of passages, default is 5
 #' @param reps.in - repeats, default is 2
 #' @param ests.in - if not given, mom function will be called and get est.in output
-#' @param data.check - boolean, if need to have a data check, default is FALSE
 #' @param est - estimator keyword, mcem or mcmc
 #' @param se - standard error keyword, default is analytic
 #' @param verbose - boolean, if shows the summary, default is FALSE
@@ -29,7 +28,7 @@
 #' @return MCEM list, MCMC list
 #' @export
 mcem <- function(object, studentid="",passageid="",nwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in,
-                 data.check=FALSE, est="mcem",se="analytic",verbose=FALSE) {
+                 est="mcem",se="analytic",verbose=FALSE) {
   # loading logger
   log.initiating()
 
@@ -41,7 +40,7 @@ mcem <- function(object, studentid="",passageid="",nwords.p="",wrc="",time="", k
   if (est == "mcem") {
     dat <- object
     return(
-      run.mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,data.check,verbose=verbose)
+      run.mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,verbose=verbose)
     )
   } else { # for MCMC, mcem parameters are necessary
     # Check MCEM object

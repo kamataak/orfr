@@ -9,7 +9,7 @@ getBootstrapSE(
   object,
   stu.data,
   case = NA,
-  perfect_season,
+  perfect.cases,
   est = "map",
   kappa = 1,
   bootstrap = 100
@@ -22,7 +22,7 @@ getBootstrapSE(
 
 \item{case}{- case number}
 
-\item{perfect_season}{- perfect accurate case}
+\item{perfect.cases}{- perfect accurate case}
 
 \item{est}{- SE type.(MLE, EAP, and MAP.) default MAP}
 
