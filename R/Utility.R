@@ -175,7 +175,8 @@ prepwide <- function(data,studentid,passageid,nwords.p,wrc,time){
     select(-vars[1])
   N <- dat %>%
     group_by_at(2) %>%
-    summarise_at(3,max) %>%
+#    summarise_at(3,max) %>%
+    summarise_at(.vars = names(.)[3],max) %>%
     select(-vars[2])
   N <- pull(N)
   I <- length(N)
