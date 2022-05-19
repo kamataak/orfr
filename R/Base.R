@@ -389,7 +389,6 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,verbose=FALSE) {
 #' @param cases = student season id vector
 #' @param est - estimator, c("mle", "map", "eap"), default "map"
 #' @param perfect.cases = perfect accurate case
-#' @param hyperparam.out - hyper parameter output flag
 #' @param lo = default -4
 #' @param hi = default 4
 #' @param q  = default 100
@@ -404,7 +403,7 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,verbose=FALSE) {
 #' @import MultiGHQuad
 #'
 #' @return wcpm list
-run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map", hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1) {
+run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map", lo = -4, hi = 4, q = 100, kappa = 1, external=NULL) {
   # loading logger
   log.initiating()
   flog.info("Begin wcpm process", name = "orfrlog")
@@ -422,7 +421,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
   Estimator <- est
   flog.info(paste(paste("Output", est),"WCPM score"), name = "orfrlog")
 
-  est.theta.tau <- function(stu.data, pass.data, case, lo = -4, hi = 4, q = 100) {
+  est.theta.tau <- function(stu.data, pass.data, case, lo = -4, hi = 4, q = 100, external=NULL) {
     # print(case)
     #    stu.data <- dat$data.raw
     #    pass.data <- new_passage_MCEM$pass.param
@@ -430,20 +429,42 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     case_split <- unlist(str_split(case, "_"))
     stu.dat01 <- stu.data %>% filter(stu.data$student.id==case_split[1], stu.data$occasion==case_split[2])
     pass.read <- stu.dat01 %>% select(passage.id)
-    pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage.id")
-    n.pass <- nrow(pass.dat01)
-    numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
-    grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
 
-    wrc <- stu.dat01 %>% select(wrc) %>% c() %>% unlist()
-    lgsec <- stu.dat01 %>% select(lgsec) %>% c() %>% unlist()
-    nwords.p <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist()
-    lgsec10 <- lgsec-log(nwords.p) + log(10)
+    if (is.null(external)) {
+      pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage.id")
+      n.pass <- nrow(pass.dat01)
+      numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
+      grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
 
-    a.par <- pass.dat01 %>% select(a) %>% c() %>% unlist()
-    b.par <- pass.dat01 %>% select(b) %>% c() %>% unlist()
-    alpha.par <- pass.dat01 %>% select(alpha) %>% c() %>% unlist()
-    beta.par <- pass.dat01 %>% select(beta) %>% c() %>% unlist()
+      wrc <- stu.dat01 %>% select(wrc) %>% c() %>% unlist()
+      lgsec <- stu.dat01 %>% select(lgsec) %>% c() %>% unlist()
+      nwords.p <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist()
+      lgsec10 <- lgsec-log(nwords.p) + log(10)
+
+      a.par <- pass.dat01 %>% select(a) %>% c() %>% unlist()
+      b.par <- pass.dat01 %>% select(b) %>% c() %>% unlist()
+      alpha.par <- pass.dat01 %>% select(alpha) %>% c() %>% unlist()
+      beta.par <- pass.dat01 %>% select(beta) %>% c() %>% unlist()
+
+    } else { # When external passages
+
+      pass.dat01 <- pass.read
+      n.pass <- nrow(pass.dat01)
+      numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
+      grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
+
+      wrc <- stu.dat01 %>% select(wrc) %>% c() %>% unlist()
+      lgsec <- stu.dat01 %>% select(lgsec) %>% c() %>% unlist()
+      nwords.p <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist()
+      lgsec10 <- lgsec-log(nwords.p) + log(10)
+
+      # get a, b, alpha, beta from MCEM pass.data
+      a.par <- pass.data %>% filter(passage.id %in% external) %>% select(a) %>% c() %>% unlist()
+      b.par <- pass.data %>% filter(passage.id %in% external) %>% select(b) %>% c() %>% unlist()
+      alpha.par <- pass.data %>% filter(passage.id %in% external) %>% select(alpha) %>% c() %>% unlist()
+      beta.par <- pass.data %>% filter(passage.id %in% external) %>% select(beta) %>% c() %>% unlist()
+    }
+
 
     # MLE for tau & theta
     tau.mle <- sum(alpha.par^2*(beta.par - lgsec10))/sum(alpha.par^2)
@@ -583,61 +604,37 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     # }
     if (Estimator == "mle") {
 
-      if (hyperparam.out) {
-        out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                      n.pass=n.pass, numwords.total=numwords.total,
-                      wrc.obs, secs.obs, wcpm.obs,
-                      tau.mle,
-                      theta.mle,
-                      se.tau.mle=se.tau,
-                      se.theta.mle,
-                      wrc.mle=wrc.mle0, secs.mle=secs.mle0, wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
-      } else { # no output for theta and tau
-        out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                      n.pass=n.pass, numwords.total=numwords.total,
-                      wrc.obs, secs.obs, wcpm.obs,
-                      wrc.mle=wrc.mle0, secs.mle=secs.mle0, wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
+      out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
+                    n.pass=n.pass, numwords.total=numwords.total,
+                    wrc.obs, secs.obs, wcpm.obs,
+                    tau.mle,
+                    theta.mle,
+                    se.tau.mle=se.tau,
+                    se.theta.mle,
+                    wrc.mle=wrc.mle0, secs.mle=secs.mle0, wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
 
-      }
     } else if (Estimator == "map") {
-      if (hyperparam.out) {
-        out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                      n.pass=n.pass, numwords.total=numwords.total,
-                      wrc.obs, secs.obs, wcpm.obs,
-                      tau.map=ests.map[2],
-                      theta.map=ests.map[1],
-                      # add these two columns, similar to EAP output
-                      se.tau.map=ests.map[2],
-                      se.theta.map=ests.map[1],
-                      wrc.map, secs.map, wcpm.map, se.wcpm.map)
-      } else { # no output for theta and tau
-        out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                      n.pass=n.pass, numwords.total=numwords.total,
-                      wrc.obs, secs.obs, wcpm.obs,
-                      wrc.map, secs.map, wcpm.map, se.wcpm.map)
-      }
+      out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
+                    n.pass=n.pass, numwords.total=numwords.total,
+                    wrc.obs, secs.obs, wcpm.obs,
+                    tau.map=ests.map[2],
+                    theta.map=ests.map[1],
+                    # add these two columns, similar to EAP output
+                    se.tau.map=ests.map[2],
+                    se.theta.map=ests.map[1],
+                    wrc.map, secs.map, wcpm.map, se.wcpm.map)
     } else if (Estimator == "eap") {
-      if (hyperparam.out) {
-        out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                      n.pass=n.pass, numwords.total=numwords.total,
-                      wrc.obs, secs.obs, wcpm.obs,
-                      tau.eap = ests.quad[2],
-                      theta.eap = ests.quad[1],
-                      se.tau.eap = se.quad[2],
-                      se.theta.eap = se.quad[1],
-                      wrc.eap = wrc.quad,
-                      secs.eap = secs.quad,
-                      wcpm.eap = wcpm.quad,
-                      se.wcpm.eap = se.wcpm.quad)
-      } else { # no output for theta and tau
-        out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                      n.pass=n.pass, numwords.total=numwords.total,
-                      wrc.obs, secs.obs, wcpm.obs,
-                      wrc.eap = wrc.quad,
-                      secs.eap = secs.quad,
-                      wcpm.eap = wcpm.quad,
-                      se.wcpm.eap = se.wcpm.quad)
-      }
+      out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
+                    n.pass=n.pass, numwords.total=numwords.total,
+                    wrc.obs, secs.obs, wcpm.obs,
+                    tau.eap = ests.quad[2],
+                    theta.eap = ests.quad[1],
+                    se.tau.eap = se.quad[2],
+                    se.theta.eap = se.quad[1],
+                    wrc.eap = wrc.quad,
+                    secs.eap = secs.quad,
+                    wcpm.eap = wcpm.quad,
+                    se.wcpm.eap = se.wcpm.quad)
     } else if (Estimator == "all"){ # output all estimators
       out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
                     n.pass=n.pass, numwords.total=numwords.total,
@@ -685,7 +682,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
         { est.theta.tau(stu.data,
                         pass.data,
                         cases$cases[i],
-                        lo, hi, q)
+                        lo, hi, q, external=external)
         }
 
       class(theta.tau) <- "wcpm" #define wcpm class
@@ -701,10 +698,10 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
         mclapply(function(x) {est.theta.tau(stu.data=stu.data,
                                             pass.data=pass.data,
                                             case=x,
-                                            lo = -4, hi = 4, q = 100)},
+                                            lo = -4, hi = 4, q = 100, external=external)},
                  mc.cores=numCores) %>%
         bind_rows()
-
+      #
       #for test on linux
       # seq_id_all <- nrow(cases)
       #      print(cases$cases[1])
@@ -712,7 +709,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       #   { est.theta.tau(stu.data=stu.data,
       #                   pass.data=pass.data,
       #                   cases$cases[i],
-      #                   lo, hi, q)
+      #                   lo, hi, q, external=external)
       #   }
       #
       class(theta.tau) <- "wcpm" #define wcpm class

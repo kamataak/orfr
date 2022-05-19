@@ -14,22 +14,19 @@ wcpm(
   wrc = "",
   time = "",
   stu.data = data,
-  pass.data = NA,
   cases = NA,
   est = "map",
   se = "analytic",
   wo = "internal",
   failsafe = 0,
   bootstrap = 100,
-  hyperparam.out = FALSE
+  external = NULL
 )
 }
 \arguments{
 \item{object}{- mcem class object}
 
 \item{stu.data}{- student reading data}
-
-\item{pass.data}{- passage parameters data}
 
 \item{cases}{- student id vectors}
 
@@ -41,7 +38,7 @@ wcpm(
 
 \item{failsafe}{- retry time for bootstrap / default 0, can set to 5 ~ 50}
 
-\item{hyperparam.out}{- hyper parameter output flag, default FALSE, if TRUE, output theta and tau}
+\item{external}{- if not NULL, will use not student read passages for estimating}
 
 \item{bootstrp}{- set K number of bootstrap / default 100}
 }

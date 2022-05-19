@@ -46,7 +46,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
 
   MCEM <- object
   # Run wcpm function and get ALL estimator
-  WCPM <- MCEM %>% run.wcpm(stu.data, pass.data=MCEM$pass.param, cases=case, perfect.cases, est="all", hyperparam.out=TRUE, lo = -4, hi = 4, q = 100, kappa = 1)
+  WCPM <- MCEM %>% run.wcpm(stu.data, cases=case, perfect.cases, est="all", lo = -4, hi = 4, q = 100, kappa = 1)
   pass.data <- MCEM$pass.param
 
   # Extract relevant parameters for given case

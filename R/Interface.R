@@ -78,19 +78,18 @@ mcem <- function(object, studentid="",passageid="",nwords.p="",wrc="",time="", k
 #'
 #' @param object - mcem class object
 #' @param stu.data - student reading data
-#' @param pass.data - passage parameters data
 #' @param cases - student id vectors
 #' @param est - estimator keyword / c("mle", "map", "eap")
 #' @param se - standard error keyword / c("analytic", "bootstrap")
 #' @param wo - wcpm option / c("internal", "external"), default is internal
 #' @param failsafe - retry time for bootstrap / default 0, can set to 5 ~ 50
 #' @param bootstrp - set K number of bootstrap / default 100
-#' @param hyperparam.out - hyper parameter output flag, default FALSE, if TRUE, output theta and tau
+#' @param external - if not NULL, will use not student read passages for estimating
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
-wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="",wrc="",time="", stu.data=data, pass.data=NA, cases=NA,
-                 est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, hyperparam.out=FALSE) {
+wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="",wrc="",time="", stu.data=data, cases=NA,
+                 est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, external=NULL) {
   # loading logger
   log.initiating()
   # if (studentid != "" & class(object)[1] != "mcem" ) {
@@ -100,7 +99,7 @@ wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="
     MCEM <- mcem(object,studentid,passageid,nwords.p,wrc,time,est="mcem")
     #create long data
     stu.data <- preplong(object,studentid,passageid,season,grade,nwords.p,wrc,time)
-    pass.data <- MCEM$pass.param
+    #    pass.data <- MCEM$pass.param
     object <- MCEM
   }
 
@@ -108,6 +107,8 @@ wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="
   if (wo=="internal") { # internal, object must be mcem object
     if (class(object)[1] == "mcem") {
       MCEM <- object
+      # assign pass.data
+      pass.data <- MCEM$pass.param
     } else { # if no MCEM object stop running
       flog.info("Missed MCEM object, end wcpm process", name = "orfrlog")
       return(NULL)
@@ -133,7 +134,7 @@ wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="
   bootstrap.out <- tibble()
   error_case <- tibble()
   if (se == "analytic") {
-    run.wcpm(object, stu.data, pass.data, cases, perfect.cases, est, hyperparam.out, lo = -4, hi = 4, q = 100, kappa = 1)
+    run.wcpm(object, stu.data, pass.data, cases, perfect.cases, est, lo = -4, hi = 4, q = 100, kappa = 1, external=external)
   } else if (se == "bootstrap"){ #for bootstrap
 
     RE_TRY <- failsafe # Define retry, if 0, no retry

@@ -4,7 +4,7 @@
 \alias{summary.wcpm}
 \title{summary the information of wcpm class}
 \usage{
-\method{summary}{wcpm}(object, digits = 4, verbose = TRUE)
+\method{summary}{wcpm}(object, digits = 4, verbose = TRUE, factor.scores = FALSE)
 }
 \arguments{
 \item{object}{= object}
@@ -12,6 +12,8 @@
 \item{digits}{= print out numeric with specific digits}
 
 \item{verbose}{- boolean, if TRUE, shows the summary, default is TRUE}
+
+\item{factor.scores}{- theta and tau output flag, default is FALSE}
 }
 \value{
 wcpm dataset with passage information and estimated score

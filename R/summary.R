@@ -65,19 +65,26 @@ summary.mcem <- function(object, digits=4,...) {
 #' @param object = object
 #' @param digits = print out numeric with specific digits
 #' @param verbose - boolean, if TRUE, shows the summary, default is TRUE
+#' @param factor.scores - theta and tau output flag, default is FALSE
 #'
 #' @return wcpm dataset with passage information and estimated score
 #' @method summary wcpm
 #' @export
-summary.wcpm <- function(object, digits=4,verbose=TRUE) {
+summary.wcpm <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
   z <- object
   tb <- as.data.frame(sapply(z,c))
 
+  # don't output theta and tau, if FALSE
+  if (factor.scores==FALSE) {
+    tb <- tb %>% select(-contains(c("tau", "theta")))
+  }
+
   getNames <- colnames(tb)
+
   cols_num <- ncol(tb)
   #set screen print out to be short decimal
   tt <- as.matrix(unlist(lapply(as.double(unlist((tb[,c(6:cols_num)]))),
-                         sprintf, fmt = "%6.2f")))
+                                sprintf, fmt = "%6.2f")))
   dim(tt) <- c(dim(tb)[1],(cols_num-5))
   tt <- cbind(tb[,c(1:5)], tt)
   colnames(tt) <- getNames
@@ -117,7 +124,7 @@ summary.wcpm <- function(object, digits=4,verbose=TRUE) {
 #' @export
 summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE) {
   z <- object
-#  tb <- as.data.frame(sapply(z$bootstrap.out,c))
+  #  tb <- as.data.frame(sapply(z$bootstrap.out,c))
   tb <- z$bootstrap.out
   if (geterror == TRUE) {
     if (length(z$error_case) != 0) {
