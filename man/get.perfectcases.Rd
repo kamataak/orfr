@@ -2,7 +2,7 @@
 % Please edit documentation in R/Utility.R
 \name{get.perfectcases}
 \alias{get.perfectcases}
-\title{The function get perfect accurate cases}
+\title{Returns perfect cases (student and occasion) in which every word was read correctly.}
 \usage{
 get.perfectcases(data)
 }
@@ -13,5 +13,5 @@ get.perfectcases(data)
 perfect accurate case vector
 }
 \description{
-The function get perfect accurate cases
+Returns perfect cases (student and occasion) in which every word was read correctly.
 }

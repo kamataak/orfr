@@ -2,7 +2,7 @@
 % Please edit documentation in R/Utility.R
 \name{get.cases}
 \alias{get.cases}
-\title{The function get return cases used for wcpm function}
+\title{Returns cases (student and occasion) applied in [wcpm] function.}
 \usage{
 get.cases(data)
 }
@@ -13,5 +13,5 @@ get.cases(data)
 cases vector
 }
 \description{
-The function get return cases used for wcpm function
+Returns cases (student and occasion) applied in [wcpm] function.
 }

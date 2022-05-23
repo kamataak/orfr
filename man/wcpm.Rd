@@ -10,7 +10,7 @@ wcpm(
   passageid = "",
   season = "",
   grade = "",
-  nwords.p = "",
+  numwords.p = "",
   wrc = "",
   time = "",
   stu.data = data,

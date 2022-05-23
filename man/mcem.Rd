@@ -8,7 +8,7 @@ mcem(
   object,
   studentid = "",
   passageid = "",
-  nwords.p = "",
+  numwords.p = "",
   wrc = "",
   time = "",
   k.in = 5,

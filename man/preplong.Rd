@@ -2,9 +2,9 @@
 % Please edit documentation in R/Utility.R
 \name{preplong}
 \alias{preplong}
-\title{The function returns long format data for wcpm function}
+\title{Prepares data in a long format for [wcpm]}
 \usage{
-preplong(data, studentid, passageid, season, grade, nwords.p, wrc, time)
+preplong(data, studentid, passageid, season, grade, numwords.p, wrc, time)
 }
 \arguments{
 \item{data}{= student response data}
@@ -13,5 +13,5 @@ preplong(data, studentid, passageid, season, grade, nwords.p, wrc, time)
 data frame
 }
 \description{
-The function returns long format data for wcpm function
+Prepares data in a long format for [wcpm]
 }
