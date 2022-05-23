@@ -303,7 +303,7 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,verbose=FALSE) {
   #                                       b = colMeans(b.store),
   #                                       alpha = colMeans(alpha.store),
   #                                       beta = colMeans(beta.store),
-  #                                       nwords.p = N))
+  #                                       numwords.p = N))
   mean_a = colMeans(a.store)
   mean_b = colMeans(b.store)
   mean_alpha = colMeans(alpha.store)
@@ -332,7 +332,7 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,verbose=FALSE) {
     se_alpha = se_alpha.store,
     se_beta = se_beta.store,
     passage.id = as.numeric(colnames(Y)),
-    nwords.p = N)
+    numwords.p = N)
   hyper.param <- tibble(vartau = colMeans(vartau.store),
                         rho = colMeans(rho.store),
                         se_vartau = se_vartau.store,
@@ -359,7 +359,7 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,verbose=FALSE) {
   #                                       b = mean_b,
   #                                       alpha = mean_alpha,
   #                                       beta = mean_beta,
-  #                                       nwords.p = N)
+  #                                       numwords.p = N)
   # )
   # check if shows the summary
   if (verbose == TRUE) {
@@ -435,13 +435,13 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     n.pass <- nrow(pass.dat01)
 
 
-    numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
+    numwords.total <- stu.dat01 %>% select(numwords.p) %>% c() %>% unlist() %>% sum()
     grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
 
     wrc <- stu.dat01 %>% select(wrc) %>% c() %>% unlist()
     lgsec <- stu.dat01 %>% select(lgsec) %>% c() %>% unlist()
-    nwords.p <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist()
-    lgsec10 <- lgsec-log(nwords.p) + log(10)
+    numwords.p <- stu.dat01 %>% select(numwords.p) %>% c() %>% unlist()
+    lgsec10 <- lgsec-log(numwords.p) + log(10)
 
     a.par <- pass.dat01 %>% select(a) %>% c() %>% unlist()
     b.par <- pass.dat01 %>% select(b) %>% c() %>% unlist()
@@ -455,7 +455,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       b.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(b) %>% c() %>% unlist()
       alpha.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(alpha) %>% c() %>% unlist()
       beta.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(beta) %>% c() %>% unlist()
-      nwords.p.external <- pass.data %>% filter(passage.id %in% external) %>% select(nwords.p) %>% c() %>% unlist()
+      numwords.p.external <- pass.data %>% filter(passage.id %in% external) %>% select(numwords.p) %>% c() %>% unlist()
     }
 
 
@@ -471,9 +471,9 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     mod.pd1 <- function(theta) {
       eta <- a.par*theta - b.par
       #term1 <- sum(a.par*wrc*dnorm(eta)/pnorm(eta))
-      #term2 <- sum(a.par*(nwords.p-wrc)*dnorm(eta)/(1-pnorm(eta)))
+      #term2 <- sum(a.par*(numwords.p-wrc)*dnorm(eta)/(1-pnorm(eta)))
       term1 <- sum(a.par*wrc*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE)))
-      term2 <- sum(a.par*(nwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
+      term2 <- sum(a.par*(numwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
       pd1 <- term1 - term2
     }
 
@@ -497,23 +497,23 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     if (!(case %in% perfect.cases$perfect.cases)) {
       theta.mle <- uniroot(mod.pd1, c(-12, 12))$root
       eta <- a.par*theta.mle - b.par
-      #se.theta.mle <- sum((a.par*nwords.p*dnorm(eta))/(pnorm(eta)*(1-pnorm(eta))))^(-0.5)
-      I.theta <- sum(a.par^2*nwords.p*dnorm(eta)^2/(pnorm(eta)*(1-pnorm(eta))))
+      #se.theta.mle <- sum((a.par*numwords.p*dnorm(eta))/(pnorm(eta)*(1-pnorm(eta))))^(-0.5)
+      I.theta <- sum(a.par^2*numwords.p*dnorm(eta)^2/(pnorm(eta)*(1-pnorm(eta))))
       se.theta.mle <- 1/sqrt(I.theta)
 
       if (is.null(external)) { #internal
-        #secs.mle0 <- sum(exp(beta.par + log(nwords.p) - tau.mle + ((1/alpha.par)^2)/2))
-        secs.mle0 <- sum(exp(beta.par - log(10) + log(nwords.p) - tau.mle + ((1/alpha.par)^2)/2))
-        wrc.mle0 <- sum(nwords.p*pnorm(a.par*theta.mle - b.par))
+        #secs.mle0 <- sum(exp(beta.par + log(numwords.p) - tau.mle + ((1/alpha.par)^2)/2))
+        secs.mle0 <- sum(exp(beta.par - log(10) + log(numwords.p) - tau.mle + ((1/alpha.par)^2)/2))
+        wrc.mle0 <- sum(numwords.p*pnorm(a.par*theta.mle - b.par))
         wcpm.mle0 <- wrc.mle0/secs.mle0*60
-        k.theta0 <- sum(a.par*nwords.p*dnorm( a.par*theta.mle - b.par ))/sum(nwords.p*pnorm( a.par*theta.mle - b.par ))
+        k.theta0 <- sum(a.par*numwords.p*dnorm( a.par*theta.mle - b.par ))/sum(numwords.p*pnorm( a.par*theta.mle - b.par ))
         se.wcpm.mle0 <- wcpm.mle0*(k.theta0^2*se.theta.mle^2 + se.tau^2)^0.5
       } else {
         # if external, will calculate with external a, b, alpha, and beta
-        secs.mle0 <- sum(exp(beta.par.external - log(10) + log(nwords.p.external) - tau.mle + ((1/alpha.par.external)^2)/2))
-        wrc.mle0 <- sum(nwords.p.external*pnorm(a.par.external*theta.mle - b.par.external))
+        secs.mle0 <- sum(exp(beta.par.external - log(10) + log(numwords.p.external) - tau.mle + ((1/alpha.par.external)^2)/2))
+        wrc.mle0 <- sum(numwords.p.external*pnorm(a.par.external*theta.mle - b.par.external))
         wcpm.mle0 <- wrc.mle0/secs.mle0*60
-        k.theta0 <- sum(a.par.external*nwords.p.external*dnorm( a.par.external*theta.mle - b.par.external ))/sum(nwords.p.external*pnorm( a.par.external*theta.mle - b.par.external ))
+        k.theta0 <- sum(a.par.external*numwords.p.external*dnorm( a.par.external*theta.mle - b.par.external ))/sum(numwords.p.external*pnorm( a.par.external*theta.mle - b.par.external ))
         se.wcpm.mle0 <- wcpm.mle0*(k.theta0^2*se.theta.mle^2 + se.tau^2)^0.5
 
       }
@@ -541,7 +541,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
 
         ee1 <- -1/(kappa^2*(1-rho^2))*(theta-rho/sqrt(vartau)*tau) +
           sum(a.par*wrc*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE))) -
-          sum(a.par*(nwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
+          sum(a.par*(numwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
         # Modified the bug here
         # ee2 <- -1/(kappa^2*(1-rho^2))*(theta/vartau-rho/sqrt(vartau)*tau) -
         #   sum(alpha.par*(lgsec10 - beta.par + tau))
@@ -557,17 +557,17 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       ests.map <- rootSolve::multiroot(est.eqs, in.vals)$root
       # MAP WCPM score
       if (is.null(external)) { #internal
-        wrc.map <- sum(nwords.p*pnorm(a.par*ests.map[1] - b.par))
-        secs.map <- sum(exp(beta.par - log(10) + log(nwords.p) - ests.map[2] + ((1/alpha.par)^2)/2))
+        wrc.map <- sum(numwords.p*pnorm(a.par*ests.map[1] - b.par))
+        secs.map <- sum(exp(beta.par - log(10) + log(numwords.p) - ests.map[2] + ((1/alpha.par)^2)/2))
         wcpm.map <- wrc.map/secs.map*60
-        k.theta.map <- sum(a.par*nwords.p*dnorm( a.par*ests.map[1] - b.par ))/sum(nwords.p*pnorm( a.par*ests.map[1] - b.par ))
+        k.theta.map <- sum(a.par*numwords.p*dnorm( a.par*ests.map[1] - b.par ))/sum(numwords.p*pnorm( a.par*ests.map[1] - b.par ))
         se.wcpm.map <- wcpm.map*(k.theta.map^2*se.theta.mle^2 + se.tau^2)^0.5
       } else {
         # if external, will calculate with external a, b, alpha, and beta
-        wrc.map <- sum(nwords.p.external*pnorm(a.par.external*ests.map[1] - b.par.external))
-        secs.map <- sum(exp(beta.par.external - log(10) + log(nwords.p.external) - ests.map[2] + ((1/alpha.par.external)^2)/2))
+        wrc.map <- sum(numwords.p.external*pnorm(a.par.external*ests.map[1] - b.par.external))
+        secs.map <- sum(exp(beta.par.external - log(10) + log(numwords.p.external) - ests.map[2] + ((1/alpha.par.external)^2)/2))
         wcpm.map <- wrc.map/secs.map*60
-        k.theta.map <- sum(a.par.external*nwords.p.external*dnorm( a.par.external*ests.map[1] - b.par.external ))/sum(nwords.p.external*pnorm( a.par.external*ests.map[1] - b.par.external ))
+        k.theta.map <- sum(a.par.external*numwords.p.external*dnorm( a.par.external*ests.map[1] - b.par.external ))/sum(numwords.p.external*pnorm( a.par.external*ests.map[1] - b.par.external ))
         se.wcpm.map <- wcpm.map*(k.theta.map^2*se.theta.mle^2 + se.tau^2)^0.5
       }
       # End of MAP estimation
@@ -595,7 +595,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       LQ <- rep(0, q)
       for(i in 1:q) {
         eta <- a.par*Q[i] - b.par
-        binom.lik <- dbinom(wrc, nwords.p, pnorm(eta), log = T)
+        binom.lik <- dbinom(wrc, numwords.p, pnorm(eta), log = T)
         LQk <- exp(sum(binom.lik))
         LQ[i] <- LQk
       }
@@ -613,7 +613,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       loglik <- function(z) {
         theta <- z[1]
         tau <- z[2]
-        loglik.bi <- sum(dbinom(wrc, nwords.p, pnorm((a.par*theta)-b.par), log = T)) +
+        loglik.bi <- sum(dbinom(wrc, numwords.p, pnorm((a.par*theta)-b.par), log = T)) +
           sum(dnorm(lgsec10, beta.par-tau, 1/alpha.par, log = T))
       }
 
@@ -622,17 +622,17 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       se.quad <- c(sqrt(varmat[1,1]), sqrt(varmat[2,2]))
       # QUAD WCPM score
       if (is.null(external)) { #internal
-        wrc.quad <- sum(nwords.p*pnorm(a.par*ests.quad[1] - b.par))
-        secs.quad <- sum(exp(beta.par - log(10) + log(nwords.p) - ests.quad[2] + ((1/alpha.par)^2)/2))
+        wrc.quad <- sum(numwords.p*pnorm(a.par*ests.quad[1] - b.par))
+        secs.quad <- sum(exp(beta.par - log(10) + log(numwords.p) - ests.quad[2] + ((1/alpha.par)^2)/2))
         wcpm.quad <- wrc.quad/secs.quad*60
-        k.theta.quad <- sum(a.par*nwords.p*dnorm( a.par*ests.quad[1] - b.par ))/sum(nwords.p*pnorm( a.par*ests.quad[1] - b.par ))
+        k.theta.quad <- sum(a.par*numwords.p*dnorm( a.par*ests.quad[1] - b.par ))/sum(numwords.p*pnorm( a.par*ests.quad[1] - b.par ))
         se.wcpm.quad <- wcpm.quad*(k.theta.quad^2*se.quad[1]^2 + se.quad[2]^2)^0.5
       } else {
         # if external, will calculate with external a, b, alpha, and beta
-        wrc.quad <- sum(nwords.p.external*pnorm(a.par.external*ests.quad[1] - b.par.external))
-        secs.quad <- sum(exp(beta.par.external - log(10) + log(nwords.p.external) - ests.quad[2] + ((1/alpha.par.external)^2)/2))
+        wrc.quad <- sum(numwords.p.external*pnorm(a.par.external*ests.quad[1] - b.par.external))
+        secs.quad <- sum(exp(beta.par.external - log(10) + log(numwords.p.external) - ests.quad[2] + ((1/alpha.par.external)^2)/2))
         wcpm.quad <- wrc.quad/secs.quad*60
-        k.theta.quad <- sum(a.par.external*nwords.p.external*dnorm( a.par.external*ests.quad[1] - b.par.external ))/sum(nwords.p.external*pnorm( a.par.external*ests.quad[1] - b.par.external ))
+        k.theta.quad <- sum(a.par.external*numwords.p.external*dnorm( a.par.external*ests.quad[1] - b.par.external ))/sum(numwords.p.external*pnorm( a.par.external*ests.quad[1] - b.par.external ))
         se.wcpm.quad <- wcpm.quad*(k.theta.quad^2*se.quad[1]^2 + se.quad[2]^2)^0.5
       }
       # End of BiEAP

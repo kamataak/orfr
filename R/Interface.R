@@ -27,14 +27,14 @@
 #'
 #' @return MCEM list, MCMC list
 #' @export
-mcem <- function(object, studentid="",passageid="",nwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in,
+mcem <- function(object, studentid="",passageid="",numwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in,
                  est="mcem",se="analytic",verbose=FALSE) {
   # loading logger
   log.initiating()
 
   if (studentid != "") {
     #create wide data
-    object <- prepwide(object,studentid,passageid,nwords.p,wrc,time)
+    object <- prepwide(object,studentid,passageid,numwords.p,wrc,time)
   }
 
   if (est == "mcem") {
@@ -88,7 +88,7 @@ mcem <- function(object, studentid="",passageid="",nwords.p="",wrc="",time="", k
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
-wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="",wrc="",time="", stu.data=data, cases=NA,
+wcpm <- function(object, studentid="",passageid="",season="",grade="",numwords.p="",wrc="",time="", stu.data=data, cases=NA,
                  est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, external=NULL) {
   # loading logger
   log.initiating()
@@ -96,9 +96,9 @@ wcpm <- function(object, studentid="",passageid="",season="",grade="",nwords.p="
 
   if (class(object)[1] != "mcem" ) {
     #call mcem
-    MCEM <- mcem(object,studentid,passageid,nwords.p,wrc,time,est="mcem")
+    MCEM <- mcem(object,studentid,passageid,numwords.p,wrc,time,est="mcem")
     #create long data
-    stu.data <- preplong(object,studentid,passageid,season,grade,nwords.p,wrc,time)
+    stu.data <- preplong(object,studentid,passageid,season,grade,numwords.p,wrc,time)
     #    pass.data <- MCEM$pass.param
     object <- MCEM
   }

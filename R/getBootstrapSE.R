@@ -55,7 +55,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
   # pass.read <- stu.dat01 %>% select(passage_id)
   # pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage_id")
   # n.pass <- nrow(pass.dat01)
-  # numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
+  # numwords.total <- stu.dat01 %>% select(numwords.p) %>% c() %>% unlist() %>% sum()
   # grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
 
   case_split <- unlist(str_split(case, "_"))
@@ -63,11 +63,11 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
   pass.read <- stu.dat01 %>% select(passage.id)
   pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage.id")
   n.pass <- nrow(pass.dat01)
-  numwords.total <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist() %>% sum()
+  numwords.total <- stu.dat01 %>% select(numwords.p) %>% c() %>% unlist() %>% sum()
   grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
 
 
-  numwords.pass <- stu.dat01 %>% select(nwords.p) %>% c() %>% unlist()
+  numwords.pass <- stu.dat01 %>% select(numwords.p) %>% c() %>% unlist()
 
   a.par <- pass.dat01 %>% select(a) %>% c() %>% unlist()
   b.par <- pass.dat01 %>% select(b) %>% c() %>% unlist()

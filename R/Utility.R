@@ -190,7 +190,7 @@ preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
 #' prepwide(passage,
 #'  studentid = "id.student",
 #'  passageid = "id.passage",
-#'  nwords.p = "numwords.pass",
+#'  numwords.p = "numwords.pass",
 #'  wrc = "wrc",
 #'  time = "sec")
 #'
