@@ -45,9 +45,10 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
   }
 
   MCEM <- object
+  Estimator <- est
   # Run wcpm function and get ALL estimator
   pass.data <- MCEM$pass.param
-  WCPM <- MCEM %>% run.wcpm(stu.data, pass.data=pass.data, cases=case, perfect.cases, est="all", lo = -4, hi = 4, q = 100, kappa = 1)
+  WCPM <- MCEM %>% run.wcpm(stu.data, pass.data=pass.data, cases=case, perfect.cases, est=Estimator, lo = -4, hi = 4, q = 100, kappa = 1)
 
   # Extract relevant parameters for given case
   # stu.dat01 <- stu.data %>% filter(stu_season_id2==case)
@@ -85,6 +86,7 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
     # Now, consider MLE as an example
     # Extract relevant latent param estimates
     Z.in <- c(WCPM$theta.mle,WCPM$tau.mle)
+
     I <- length(numwords.pass)
 
     K <- bootstrap
@@ -229,6 +231,10 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
 
   } else if (est == "map") {
     Z.in <- c(WCPM$theta.map,WCPM$tau.map)
+
+    # get theta.mle
+    WCPM_mle <- MCEM %>% run.wcpm(stu.data, pass.data=pass.data, cases=case, perfect.cases, est='mle', lo = -4, hi = 4, q = 100, kappa = 1)
+
     I <- length(numwords.pass)
     K <- bootstrap
     Z.est <- matrix(rep(0,4*K),ncol = 4)
@@ -263,7 +269,8 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
         pd1 <- term1 - term2
         return(pd1)
       }
-      if (!is.infinite(WCPM$theta.mle)) #for non-perfect case
+
+      if (!is.infinite(WCPM_mle$theta.mle)) #for non-perfect case
         theta.mle <- uniroot(mod.pd1, c(-12, 12))$root
       else #for perfect case
         theta.mle = Inf
