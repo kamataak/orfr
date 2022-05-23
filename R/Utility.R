@@ -65,7 +65,7 @@ prep <- function(data, vars="") {
 
     dat <- data.frame(student.id=c1,
                       passage.id=c2,
-                      nwords.p=c3,
+                      numwords.p=c3,
                       occasion=c4,
                       grade=c5,
                       sec=c6,
@@ -92,7 +92,7 @@ prep <- function(data, vars="") {
       logT <- logT[ , order(names(logT))] # sort by passage.id
       N <- dat %>%
         group_by(passage.id) %>% arrange(passage.id) %>% # sort by passage.id
-        summarise(numwords.pass=max(nwords.p)) %>%
+        summarise(numwords.pass=max(numwords.p)) %>%
         select(-passage.id)
       N <- pull(N)
       I <- length(N)
@@ -120,7 +120,7 @@ prep <- function(data, vars="") {
   return(output)
 
 }
-#' The function get return cases used for wcpm function
+#' Returns cases (student and occasion) applied in [wcpm] function.
 #'
 #' @param data = student response data
 #'
@@ -133,7 +133,7 @@ get.cases <- function(data) {
     select(cases)
   return(invisible(cases))
 }
-#' The function get perfect accurate cases
+#' Returns perfect cases (student and occasion) in which every word was read correctly.
 #'
 #' @param data  = student response data
 #'
@@ -143,21 +143,60 @@ get.cases <- function(data) {
 get.perfectcases <- function(data) {
   perfect.cases <- data %>% group_by(student.id,occasion) %>%
     summarise(wrc_sum=sum(wrc),
-              nwords.p_sum=sum(nwords.p), .groups = "drop_last") %>%
-    filter(wrc_sum == nwords.p_sum) %>%
+              numwords.p_sum=sum(numwords.p), .groups = "drop_last") %>%
+    filter(wrc_sum == numwords.p_sum) %>%
     unite("perfect.cases", student.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
     select(perfect.cases)
   return(invisible(perfect.cases))
 }
-#' The function returns wide format data for mcpm function
+
+#' Prepares data in a long format for [wcpm]
 #'
 #' @param data = student response data
 #'
-#' @return list
+#' @return data frame
 #'
 #' @export
-prepwide <- function(data,studentid,passageid,nwords.p,wrc,time){
-  vars <- c(studentid,passageid,nwords.p,wrc,time)
+preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
+  vars <- c(studentid,passageid,season,grade,numwords.p,wrc,time)
+  dat <- data %>%
+    select(all_of(vars)) %>%
+    rename(student.id=1,passage.id=2,
+           occasion=3,grade=4,
+           numwords.p=5,wrc=6,sec=7) %>%
+    mutate(lgsec=log(.[[7]]))
+  #lgsec10 = log(.[[7]] - log(.[[5]]) + log(10)
+  #           stu_season_id2=paste(.[[1]],.[[3]],sep="_"))
+  return(dat)
+}
+#' Prepares data in a wide format for [mcem].
+#'
+#' This function will return a list with 5 elements:
+#' Y: a matrix of words read correctly, where rows represent cases (student and occasion) and columns represent passages
+#' logt10: a [tibble::tibble()] of words read correctly
+#' N: the number of cases per passage
+#' I: the number of passages
+#'
+#' @param data A data frame.
+#' @param studentid The column name in the data that represents the unique student identifier.
+#' @param passageid The column name in the data that represents the unique passage identifier.
+#' @param numwords.p The column name in the data that represents the number of words in a passage.
+#' @param wrc The column name in the data that represents the words read correctly for each case.
+#' @param time The column name in the data that represents the time, in seconds, for each case.
+#'
+#' @example
+#' data("passage")
+#'
+#' prepwide(passage,
+#'  studentid = "id.student",
+#'  passageid = "id.passage",
+#'  nwords.p = "numwords.pass",
+#'  wrc = "wrc",
+#'  time = "sec")
+#'
+#' @export
+prepwide <- function(data, studentid, passageid, numwords.p, wrc, time){
+  vars <- c(studentid,passageid,numwords.p,wrc,time)
   dat <- data %>%
     select(all_of(vars))
   Y <- dat %>%
@@ -175,7 +214,7 @@ prepwide <- function(data,studentid,passageid,nwords.p,wrc,time){
     select(-vars[1])
   N <- dat %>%
     group_by_at(2) %>%
-#    summarise_at(3,max) %>%
+    #    summarise_at(3,max) %>%
     summarise_at(.vars = names(.)[3],max) %>%
     select(-vars[2])
   N <- pull(N)
@@ -184,23 +223,4 @@ prepwide <- function(data,studentid,passageid,nwords.p,wrc,time){
   logT10 <- tibble(logT - log(N.matrix) + log(10))
   data.in <- list(Y = Y, logT10 = logT10, N = N, I = I)
   return(data.in)
-}
-#' The function returns long format data for wcpm function
-#'
-#' @param data = student response data
-#'
-#' @return data frame
-#'
-#' @export
-preplong <- function(data,studentid,passageid,season,grade,nwords.p,wrc,time){
-  vars <- c(studentid,passageid,season,grade,nwords.p,wrc,time)
-  dat <- data %>%
-    select(all_of(vars)) %>%
-    rename(student.id=1,passage.id=2,
-           occasion=3,grade=4,
-           nwords.p=5,wrc=6,sec=7) %>%
-    mutate(lgsec=log(.[[7]]))
-  #lgsec10 = log(.[[7]] - log(.[[5]]) + log(10)
-  #           stu_season_id2=paste(.[[1]],.[[3]],sep="_"))
-  return(dat)
 }
