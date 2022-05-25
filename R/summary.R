@@ -72,7 +72,8 @@ summary.mcem <- function(object, digits=4,...) {
 #' @export
 summary.wcpm <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
   z <- object
-  tb <- as.data.frame(sapply(z,c))
+
+  tb <- as.data.frame(t(do.call(rbind, z)))
 
   # don't output theta and tau, if FALSE
   if (factor.scores==FALSE) {
@@ -124,7 +125,7 @@ summary.wcpm <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
 #' @export
 summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE) {
   z <- object
-  #  tb <- as.data.frame(sapply(z$bootstrap.out,c))
+
   tb <- z$bootstrap.out
   if (geterror == TRUE) {
     if (length(z$error_case) != 0) {

@@ -184,7 +184,7 @@ preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
 #' @param wrc The column name in the data that represents the words read correctly for each case.
 #' @param time The column name in the data that represents the time, in seconds, for each case.
 #'
-#' @example
+#' @examples
 #' data("passage")
 #'
 #' prepwide(passage,
