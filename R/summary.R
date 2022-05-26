@@ -120,10 +120,11 @@ summary.wcpm <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
 #' @param digits = print out numeric with specific digits
 #' @param geterror, summary error case, default FALSE
 #' @param verbose show summary on screen, default TRUE
+#' @param factor.scores - theta and tau output flag, default is FALSE
 #'
 #' @return
 #' @export
-summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE) {
+summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE,factor.scores=FALSE) {
   z <- object
 
   tb <- z$bootstrap.out
@@ -136,6 +137,11 @@ summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE) {
     }
   } else {
     if (ncol(tb) != 0) {
+      # don't output theta and tau, if FALSE
+      if (factor.scores==FALSE) {
+        tb <- tb %>% select(-contains(c("tau", "theta")))
+      }
+
       getNames <- colnames(tb)
       cols_num <- ncol(tb)
 

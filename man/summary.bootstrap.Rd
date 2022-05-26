@@ -4,7 +4,13 @@
 \alias{summary.bootstrap}
 \title{summary the information of bootstrap class}
 \usage{
-\method{summary}{bootstrap}(object, digits = 4, geterror = FALSE, verbose = TRUE)
+\method{summary}{bootstrap}(
+  object,
+  digits = 4,
+  geterror = FALSE,
+  verbose = TRUE,
+  factor.scores = FALSE
+)
 }
 \arguments{
 \item{object}{= bootstrap object}
@@ -14,6 +20,8 @@
 \item{geterror, }{summary error case, default FALSE}
 
 \item{verbose}{show summary on screen, default TRUE}
+
+\item{factor.scores}{- theta and tau output flag, default is FALSE}
 }
 \value{
 

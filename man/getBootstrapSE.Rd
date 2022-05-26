@@ -12,7 +12,8 @@ getBootstrapSE(
   perfect.cases,
   est = "map",
   kappa = 1,
-  bootstrap = 100
+  bootstrap = 100,
+  external = NULL
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ getBootstrapSE(
 \item{kappa}{- Default kappa = 1, better be 5}
 
 \item{bootstrap}{- K number of bootstrap, default is 100}
+
+\item{external}{- if not NULL, will use not student read passages for estimating}
 }
 \value{
 SE dataset

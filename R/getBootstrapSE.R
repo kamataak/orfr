@@ -12,9 +12,10 @@
 #' @param perfect.cases - perfect accurate case
 #' @param kappa - Default kappa = 1, better be 5
 #' @param bootstrap - K number of bootstrap, default is 100
+#' @param external - if not NULL, will use not student read passages for estimating
 #'
 #' @return SE dataset
-getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map", kappa=1, bootstrap=100) {
+getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map", kappa=1, bootstrap=100, external=NULL) {
   log.initiating()
   flog.info("Begin getBootstrapSE process", name = "orfrlog")
 
@@ -74,6 +75,16 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
   alpha.par <- pass.dat01 %>% select(alpha) %>% c() %>% unlist()
   beta.par <- pass.dat01 %>% select(beta) %>% c() %>% unlist()
 
+  if (!is.null(external))  { # When external passages
+
+    # get a, b, alpha, beta from MCEM with specific passage.id
+    a.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(a) %>% c() %>% unlist()
+    b.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(b) %>% c() %>% unlist()
+    alpha.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(alpha) %>% c() %>% unlist()
+    beta.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(beta) %>% c() %>% unlist()
+    numwords.pass.external <- pass.data %>% filter(passage.id %in% external) %>% select(numwords.p) %>% c() %>% unlist()
+  }
+
   # Using MCEM to calculate rho and vartau
   rho <- mean(MCEM$hyper.param$rho)
   vartau <- mean(MCEM$hyper.param$vartau)
@@ -115,22 +126,25 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
       if (!is.infinite(Z.in[1])) { #for non-perfect case
         theta.mle <- uniroot(mod.pd1, c(-12, 12))$root
         # MLE WCPM score
-        wrc.mle <- sum(numwords.pass*pnorm(a.par*theta.mle - b.par))
-        secs.mle <- sum(exp(beta.par - log(10) + log(numwords.pass) - tau.mle + ((1/alpha.par)^2)/2))
-        wcpm.mle <- wrc.mle/secs.mle*60
-        k.theta <- sum(a.par*numwords.pass*dnorm( a.par*theta.mle - b.par ))/sum(numwords.pass*pnorm( a.par*theta.mle - b.par ))
+        if (is.null(external)) { #internal
+          wrc.mle <- sum(numwords.pass*pnorm(a.par*theta.mle - b.par))
+          secs.mle <- sum(exp(beta.par - log(10) + log(numwords.pass) - tau.mle + ((1/alpha.par)^2)/2))
+          wcpm.mle <- wrc.mle/secs.mle*60
+          k.theta <- sum(a.par*numwords.pass*dnorm( a.par*theta.mle - b.par ))/sum(numwords.pass*pnorm( a.par*theta.mle - b.par ))
+        } else { #external
+          wrc.mle <- sum(numwords.pass.external*pnorm(a.par.external*theta.mle - b.par.external))
+          secs.mle <- sum(exp(beta.par.external - log(10) + log(numwords.pass.external) - tau.mle + ((1/alpha.par.external)^2)/2))
+          wcpm.mle <- wrc.mle/secs.mle*60
+          k.theta <- sum(a.par.external*numwords.pass.external*dnorm( a.par.external*theta.mle - b.par.external ))/sum(numwords.pass.external*pnorm( a.par.external*theta.mle - b.par.external ))
+        }
+        Z.est[k,] <- c(theta.mle, tau.mle, wcpm.mle, k.theta)
       }
-      Z.est[k,] <- c(theta.mle, tau.mle, wcpm.mle, k.theta)
     }
     se.mle <- apply(Z.est[,1:2],2,sd)
     wcpm.mle <- mean(Z.est[,3])
     k.theta <- mean(Z.est[,4])
     se.wcpm.mle <- wcpm.mle*(k.theta^2*se.mle[1]^2 + se.mle[2]^2)^0.5
 
-    # Original SE ests
-    #    orgSE <- c(WCPM$se.theta.mle,WCPM$se.tau)
-    # SE <- tibble(stu_season_id=case, se.theta.mle=se.mle[1], se.tau.mle=se.mle[2], se.wcpm.mle=se.wcpm.mle,
-    #              org.se.theta.mle=WCPM$se.theta.mle, org.se.tau.mle=WCPM$se.tau.mle, org.se.wcpm.mle=WCPM$se.wcpm.mle)
     SE <- as.data.frame(cbind(do.call(cbind, WCPM),
                               bse.theta.mle=se.mle[1],
                               bse.tau.mle=se.mle[2],
@@ -189,20 +203,25 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
 
       ests.quad <- MultiGHQuad::eval.quad(loglik, grid)
       # QUAD WCPM score
-      wrc.quad <- sum(numwords.pass*pnorm(a.par*ests.quad[1] - b.par))
-      secs.quad <- sum(exp(beta.par - log(10) + log(numwords.pass) - ests.quad[2] + ((1/alpha.par)^2)/2))
-      wcpm.quad <- wrc.quad/secs.quad*60
-      k.theta.quad <- sum(a.par*numwords.pass*dnorm( a.par*ests.quad[1] - b.par ))/sum(numwords.pass*pnorm( a.par*ests.quad[1] - b.par ))
-      Z.est[k,] <- c(ests.quad[1], ests.quad[2], wcpm.quad, k.theta.quad)
+      if (is.null(external)) { #internal
+        wrc.quad <- sum(numwords.pass*pnorm(a.par*ests.quad[1] - b.par))
+        secs.quad <- sum(exp(beta.par - log(10) + log(numwords.pass) - ests.quad[2] + ((1/alpha.par)^2)/2))
+        wcpm.quad <- wrc.quad/secs.quad*60
+        k.theta.quad <- sum(a.par*numwords.pass*dnorm( a.par*ests.quad[1] - b.par ))/sum(numwords.pass*pnorm( a.par*ests.quad[1] - b.par ))
+      } else {
+        wrc.quad <- sum(numwords.pass.external*pnorm(a.par.external*ests.quad[1] - b.par.external))
+        secs.quad <- sum(exp(beta.par.external - log(10) + log(numwords.pass.external) - ests.quad[2] + ((1/alpha.par.external)^2)/2))
+        wcpm.quad <- wrc.quad/secs.quad*60
+        k.theta.quad <- sum(a.par.external*numwords.pass.external*dnorm( a.par.external*ests.quad[1] - b.par.external ))/sum(numwords.pass.external*pnorm( a.par.external*ests.quad[1] - b.par.external ))
+      }
       # End of BiEAP
+      Z.est[k,] <- c(ests.quad[1], ests.quad[2], wcpm.quad, k.theta.quad)
     }
     se.quad <- apply(Z.est[,1:2],2,sd)
     wcpm.quad <- mean(Z.est[,3])
     k.theta.quad <- mean(Z.est[,4])
     se.wcpm.quad <- wcpm.quad*(k.theta.quad^2*se.quad[1]^2 + se.quad[2]^2)^0.5
 
-    # SE <- tibble(stu_season_id=case, se.theta.eap=se.quad[1],se.tau.eap=se.quad[2], se.wcpm.eap=se.wcpm.quad,
-    #              org.se.theta.eap=WCPM$se.theta.eap, org.se.tau.eap=WCPM$se.tau.eap, org.se.wcpm.eap=WCPM$se.wcpm.eap)
     SE <- as.data.frame(cbind(do.call(cbind, WCPM),
                               bse.theta.eap=se.quad[1],
                               bse.tau.eap=se.quad[2],
@@ -278,10 +297,17 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
       in.vals <- c(max(-5,min(5,theta.mle)),max(-5*sqrt(vartau),min(5*sqrt(vartau),tau.mle)))
       ests.map <- rootSolve::multiroot(est.eqs, in.vals)$root
       # MAP WCPM score
-      wrc.map <- sum(numwords.pass*pnorm(a.par*ests.map[1] - b.par))
-      secs.map <- sum(exp(beta.par - log(10) + log(numwords.pass) - ests.map[2] + ((1/alpha.par)^2)/2))
-      wcpm.map <- wrc.map/secs.map*60
-      k.theta.map <- sum(a.par*numwords.pass*dnorm( a.par*ests.map[1] - b.par ))/sum(numwords.pass*pnorm( a.par*ests.map[1] - b.par ))
+      if (is.null(external)) { #internal
+        wrc.map <- sum(numwords.pass*pnorm(a.par*ests.map[1] - b.par))
+        secs.map <- sum(exp(beta.par - log(10) + log(numwords.pass) - ests.map[2] + ((1/alpha.par)^2)/2))
+        wcpm.map <- wrc.map/secs.map*60
+        k.theta.map <- sum(a.par*numwords.pass*dnorm( a.par*ests.map[1] - b.par ))/sum(numwords.pass*pnorm( a.par*ests.map[1] - b.par ))
+      } else {
+        wrc.map <- sum(numwords.pass.external*pnorm(a.par.external*ests.map[1] - b.par.external))
+        secs.map <- sum(exp(beta.par.external - log(10) + log(numwords.pass.external) - ests.map[2] + ((1/alpha.par.external)^2)/2))
+        wcpm.map <- wrc.map/secs.map*60
+        k.theta.map <- sum(a.par.external*numwords.pass.external*dnorm( a.par.external*ests.map[1] - b.par.external ))/sum(numwords.pass.external*pnorm( a.par.external*ests.map[1] - b.par.external ))
+      }
       Z.est[k,] <- c(ests.map[1], ests.map[2], wcpm.map, k.theta.map)
     }
     se.map <- apply(Z.est,2,sd)
@@ -289,8 +315,6 @@ getBootstrapSE <- function (object, stu.data, case=NA, perfect.cases, est="map",
     k.theta.map <- mean(Z.est[,4])
     se.wcpm.map <- wcpm.map*(k.theta.map^2*se.map[1]^2 + se.map[2]^2)^0.5
 
-    # SE <- tibble(stu_season_id=case, se.theta.map=se.map[1],se.tau.map=se.map[2], se.wcpm.map,
-    #              org.se.theta.mle=WCPM$se.theta.mle, org.se.tau.mle=WCPM$se.tau.mle, org.se.wcpm.map=WCPM$se.wcpm.map)
     SE <- as.data.frame(cbind(do.call(cbind, WCPM),
                               bse.theta.map=se.map[1],
                               bse.tau.map=se.map[2],
