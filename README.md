@@ -3,7 +3,7 @@
 
 `orfr` is an R package that allows model-based calibration and scoring for oral reading fluency (ORF) assessment data.
 
-Installation:
+**Installation:**  
 To use `orfr`, you need a `MultiGHQuad` package installed. As of May 31, 2022, `MultiGHQuad` package has been removed from CRAN, so you need to download a binary package file from the archive https://cran.r-project.org/src/contrib/Archive/MultiGHQuad/ and install.
 
 To install `orf` package, follow the steps.
@@ -12,7 +12,7 @@ if(!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
 2. Install `orfr`
 remotes::install_github("kamataak/orfr")
 
-Usage:
+**Usage:**  
 
 
 
