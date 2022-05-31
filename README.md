@@ -34,7 +34,7 @@ test_MCEM <- mcem(passage,
 summary(test_MCEM)
 ```
 
-To estimate WCPM scores for a selected cases `tk`.
+To estimate WCPM scores for a sample of selected cases `sample.cases`.
 ``` r
 sample.cases <- get.cases(datalong) %>% .[1:3,]
 test_WCPMEAP <- wcpm(test_MCEM, 
