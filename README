@@ -1,4 +1,5 @@
-orfr: Model-Based Calibration and Scoring for Oral Reading Fluency Assessment Data with R
+# orfr
+## Model-Based Calibration and Scoring for Oral Reading Fluency Assessment Data with R
 
 `orfr` is an R package that allows model-based calibration and scoring for oral reading fluency (ORF) assessment data.
 
