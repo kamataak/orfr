@@ -91,8 +91,8 @@ sample.cases <- data.frame(cases = c("2056_fall", "2056_winter", "2056_spring"))
 ```
 
 **Step 3:** Run the `wcpm()` function to estimate WCPM scores for
-selected cases. Here, we enter the manipulated data `datalong` from the
-Step 1.
+selected cases. Here, note that we enter the manipulated data `datalong`
+from the Step 1.
 
 ``` r
 test_WCPMEAP <- wcpm(test_MCEM, 
@@ -104,10 +104,9 @@ summary(test_WCPMEAP)
 ```
 
 Alternatively, we can run the `wcpm()` function without **Step 1**
-above, by entering the original data `passage` as follows.
+above, by entering the original data `passage` directly as follows.
 
 ``` r
-sample.cases <- data.frame(cases = c("2056_fall", "2056_winter", "2056_spring"))
 test_WCPMEAP <- wcpm(test_MCEM, 
                      stu.data = passage,
                      studentid = "id.student",
