@@ -47,13 +47,64 @@ test_MCEM <- mcem(passage,
 summary(test_MCEM)
 ```
 
-To estimate WCPM scores for a sample of selected cases `sample.cases`.
+To estimate WCPM scores, we can do in three steps.
+
+**Step 1:** Prepare the data using the `preplong()` function, where
+required variables to run the `wcpm()` function are prepared, including
+the change of variable names and a generation of the natural-logarithm
+of the time data. In addition, we can use another utility function
+`get.cases()` to generate a list of unique cases.
 
 ``` r
-sample.cases <- get.cases(datalong) %>% .[1:3,]
+datalong <- preplong(stu.data = passage,
+                     studentid = "id.student",
+                     passageid = "id.passage",
+                     season = "occasion",
+                     grade = "grade",
+                     numwords.p = "numwords.pass",
+                     wrc = "wrc",
+                     time = "sec")
+```
+
+Generate a list of unique cases:
+
+``` r
+get.cases(datalong)
+```
+
+**Step 2:** Specify a list of cases for which WCPM scores are estimated:
+
+``` r
+sample.cases <- data.frame(cases = c("2056_fall", "2056_winter", "2056_spring"))
+```
+
+**Step 3:** Run the `wcpm()` function to estimate WCPM scores for
+selected cases. Here, we enter the manipulated data `datalong` from the
+Step 1.
+
+``` r
 test_WCPMEAP <- wcpm(test_MCEM, 
-                     stu.data=passage,
-                     "id.student","id.passage","occasion","grade","numwords.pass","wrc","sec",
+                     stu.data=datalong,
+                     cases=sample.cases, 
+                     est="eap", 
+                     se="analytic"))
+summary(test_WCPMEAP)
+```
+
+Alternatively, we can run the `wcpm()` function without **Step 1**
+above, by entering the original data `passage` as follows.
+
+``` r
+sample.cases <- data.frame(cases = c("2056_fall", "2056_winter", "2056_spring"))
+test_WCPMEAP <- wcpm(test_MCEM, 
+                     stu.data = passage,
+                     studentid = "id.student",
+                     passageid = "id.passage",
+                     season = "occasion",
+                     grade = "grade",
+                     numwords.p = "numwords.pass",
+                     wrc = "wrc",
+                     time = "sec",
                      cases=sample.cases, 
                      est="eap", 
                      se="analytic")
