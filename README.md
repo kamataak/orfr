@@ -63,8 +63,8 @@ summary(test_WCPMEAP)
 The package also contains calibrated passage data `MCME.rda`, in which
 passages were calibrated with much larger sample.
 
-Please see the package website: <https://kamataak.github.io/orfr/> for
-more detailed information about the package.
+Please see the [package website](https://kamataak.github.io/orfr/) for
+more detailed usage of the package.
 
 ### Citation
 
