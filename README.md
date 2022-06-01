@@ -30,9 +30,19 @@ remotes::install_github("kamataak/orfr")
 
 ### Basic Usage:
 
-The `orff` package contains an example passage-level student data set
-`passage.rda` to demonstrate some basic usage of the package.  
-To calibrate passages,
+The `orfr` package contains an example passage-level student data set
+`passage`, which is stored in the `passage.rda` file, to demonstrate
+some basic usage of the package.
+
+#### Passage Calibration
+
+Load the example data set `passage`.
+
+``` r
+load("passage.rda")
+```
+
+Calibrate the passages using the `mcem()` function.
 
 ``` r
 test_MCEM <- mcem(passage,
@@ -46,6 +56,8 @@ test_MCEM <- mcem(passage,
                   est="mcem")
 summary(test_MCEM)
 ```
+
+#### Estimating WCPM scores
 
 To estimate WCPM scores, we can do in three steps.
 
