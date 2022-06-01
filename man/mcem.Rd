@@ -18,28 +18,13 @@ mcem(
   se = "analytic",
   verbose = FALSE
 )
-
-mcem(
-  object,
-  studentid = "",
-  passageid = "",
-  numwords.p = "",
-  wrc = "",
-  time = "",
-  k.in = 5,
-  reps.in = 2,
-  ests.in,
-  est = "mcem",
-  se = "analytic",
-  verbose = FALSE
-)
 }
 \arguments{
 \item{object}{- reading data object comes from prep function}
 
-\item{k.in}{- number of passages, default is 5}
+\item{k.in}{= number of imputations, default is 5}
 
-\item{reps.in}{- repeats, default is 2}
+\item{reps.in}{= number of Monte-Carlo iterations, default is 2}
 
 \item{ests.in}{- if not given, mom function will be called and get est.in output}
 
@@ -51,26 +36,11 @@ mcem(
 }
 \value{
 MCEM list, MCMC list
-
-MCEM list, MCMC list
 }
 \description{
 Copyright (C) 2021 The ORF Project Team
-
-Copyright (C) 2021 The ORF Project Team
 }
 \details{
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 3 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A copy of the GNU General Public License is available at
-http://www.gnu.org/licenses/
-
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 3 of the License, or

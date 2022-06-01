@@ -26,8 +26,8 @@
 #' @param logT10  = n x I matrix of log10(reading times) -- missingness allowed
 #' @param N       = vector of passage lengths
 #' @param I       = number of passages
-#' @param k.in    = number of passages, default is 5
-#' @param reps.in = Reps number, default is 2
+#' @param k.in    = number of imputations, default is 5
+#' @param reps.in = number of Monte-Carlo iterations, default is 2
 #' @param ests.in = if not give, mom function will be called and get est.in output
 #' @param verbose - boolean, if shows the summary, default is FALSE
 #'
