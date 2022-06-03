@@ -29,9 +29,12 @@ Variable names and the order of the variables can be flexible in the data frame.
 
 To demonstrate some basic usage of key functions in the package, the `orfr` package contains an example passage-level student data set `passage`.     
 
-Load the example data set `passage`.  
+Load required packages, and load/view the example data set `passage`.  
 ```{r eval = F}
-data("passage")
+library(tidyverse)
+library(orfr)
+data(passage)
+View(passage)
 ```
 
 #### Passage Calibration
@@ -46,8 +49,8 @@ test_MCEM <- mcem(passage,
                   time = "sec",
                   k.in = 5,
                   reps.in = 2,
-                  est="mcem")
-summary(test_MCEM)
+                  est = "mcem")
+test_MCEM
 ```
 
 #### Estimating WCPM scores
@@ -57,7 +60,7 @@ To estimate WCPM scores, we can do in three steps.
 **Step 1:** Prepare the data using the `preplong()` function, where required variables for the `wcpm()` function are prepared, including changing variable names and a generation of the natural-logarithm of the time data. In addition, we can use another utility function `get.cases()` to generate a list of unique cases with the output of the `preplong()` function.  
 
 ```{r eval = F}
-datalong <- preplong(stu.data = passage,
+datalong <- preplong(data = passage,
                      studentid = "id.student",
                      passageid = "id.passage",
                      season = "occasion",
@@ -89,7 +92,7 @@ test_WCPMEAP <- wcpm(test_MCEM,
                      stu.data = datalong,
                      cases = sample.cases, 
                      est = "eap", 
-                     se = "analytic"))
+                     se = "analytic")
 summary(test_WCPMEAP)
 ```
 
@@ -101,7 +104,7 @@ The use of an external passage set is particularly important to make the estimat
 test_WCPMEAP_EXT <- wcpm(test_MCEM, 
                      stu.data = datalong,
                      cases = sample.cases, 
-                     external=c("22007", "22013", "22036","22043","22048","22079"),
+                     external = c("22007","22013","22036","22043","22048","22079"),
                      est = "eap", 
                      se = "analytic")
 summary(test_WCPMEAP_EXT)
@@ -118,9 +121,10 @@ test_WCPMEAP <- wcpm(test_MCEM,
                      numwords.p = "numwords.pass",
                      wrc = "wrc",
                      time = "sec",
-                     cases=sample.cases, 
-                     est="eap", 
-                     se="analytic")
+                     cases = sample.cases, 
+                     external = c("22007","22013","22036","22043","22048","22079"),
+                     est = "eap", 
+                     se = "analytic")
 summary(test_WCPMEAP)
 ```
 

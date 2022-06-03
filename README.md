@@ -46,10 +46,13 @@ To demonstrate some basic usage of key functions in the package, the
 `orfr` package contains an example passage-level student data set
 `passage`.
 
-Load the example data set `passage`.
+Load required packages, and load/view the example data set `passage`.
 
 ``` r
-data("passage")
+library(tidyverse)
+library(orfr)
+data(passage)
+View(passage)
 ```
 
 #### Passage Calibration
@@ -65,8 +68,8 @@ test_MCEM <- mcem(passage,
                   time = "sec",
                   k.in = 5,
                   reps.in = 2,
-                  est="mcem")
-summary(test_MCEM)
+                  est = "mcem")
+test_MCEM
 ```
 
 #### Estimating WCPM scores
@@ -81,7 +84,7 @@ time data. In addition, we can use another utility function
 `preplong()` function.
 
 ``` r
-datalong <- preplong(stu.data = passage,
+datalong <- preplong(data = passage,
                      studentid = "id.student",
                      passageid = "id.passage",
                      season = "occasion",
@@ -120,7 +123,7 @@ test_WCPMEAP <- wcpm(test_MCEM,
                      stu.data = datalong,
                      cases = sample.cases, 
                      est = "eap", 
-                     se = "analytic"))
+                     se = "analytic")
 summary(test_WCPMEAP)
 ```
 
@@ -137,7 +140,7 @@ cross-sectional data, as well as within students for longitudinal data.
 test_WCPMEAP_EXT <- wcpm(test_MCEM, 
                      stu.data = datalong,
                      cases = sample.cases, 
-                     external=c("22007", "22013", "22036","22043","22048","22079"),
+                     external = c("22007","22013","22036","22043","22048","22079"),
                      est = "eap", 
                      se = "analytic")
 summary(test_WCPMEAP_EXT)
@@ -157,9 +160,10 @@ test_WCPMEAP <- wcpm(test_MCEM,
                      numwords.p = "numwords.pass",
                      wrc = "wrc",
                      time = "sec",
-                     cases=sample.cases, 
-                     est="eap", 
-                     se="analytic")
+                     cases = sample.cases, 
+                     external = c("22007","22013","22036","22043","22048","22079"),
+                     est = "eap", 
+                     se = "analytic")
 summary(test_WCPMEAP)
 ```
 
