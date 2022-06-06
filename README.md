@@ -146,9 +146,9 @@ test_WCPMEAP_EXT <- wcpm(test_MCEM,
 summary(test_WCPMEAP_EXT)
 ```
 
-\[Not yet implemented\] Alternatively, we can run the `wcpm()` function
-without **Step 1** above, by entering the original data `passage`
-directly as follows.
+**\[Not yet implemented\]** Alternatively, we can run the `wcpm()`
+function without **Step 1** above, by entering the original data
+`passage` directly as follows.
 
 ``` r
 test_WCPMEAP <- wcpm(test_MCEM, 
