@@ -458,6 +458,14 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       numwords.p.external <- pass.data %>% filter(passage.id %in% external) %>% select(numwords.p) %>% c() %>% unlist()
     }
 
+    # Compute n.pass.wcpm and n.words.total.wcpm
+    if (is.null(external)) {
+      n.pass.wcpm <- n.pass
+      n.words.total.wcpm <- numwords.p
+    } else {
+      n.pass.wcpm <- length(external)
+      n.words.total.wcpm <- numwords.p.external
+    }
 
     # Using MCEM to calculate rho and vartau
     rho <- mean(MCEM$hyper.param$rho)
@@ -529,7 +537,9 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
                     theta.mle,
                     se.tau.mle=se.tau,
                     se.theta.mle,
-                    wrc.mle=wrc.mle0, secs.mle=secs.mle0, wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
+                    wrc.mle=wrc.mle0, secs.mle=secs.mle0,
+                    n.pass.wcpm, n.words.total.wcpm,
+                    wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
       return(out)
     } else if (Estimator == "map") {
       # flog.info(paste(paste("Output", est),"WCPM score"), name = "orfrlog")
