@@ -551,7 +551,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
         return(ee)
       }
 
-      # MAP estimation
+      # MAP estimation: Updated 6/7/2022
       ests.map <- NA
       in.vals <- c(max(-5,min(5,theta.mle)),max(-5*sqrt(vartau),min(5*sqrt(vartau),tau.mle)))
       ests.map <- rootSolve::multiroot(est.eqs, in.vals)$root
