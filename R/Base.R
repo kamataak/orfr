@@ -461,10 +461,10 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     # Compute n.pass.wcpm and n.words.total.wcpm
     if (is.null(external)) {
       n.pass.wcpm <- n.pass
-      n.words.total.wcpm <- numwords.p
+      n.words.total.wcpm <- sum(numwords.p)
     } else {
       n.pass.wcpm <- length(external)
-      n.words.total.wcpm <- numwords.p.external
+      n.words.total.wcpm <- sum(numwords.p.external)
     }
 
     # Using MCEM to calculate rho and vartau
