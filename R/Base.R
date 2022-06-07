@@ -555,20 +555,25 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       ests.map <- NA
       in.vals <- c(max(-5,min(5,theta.mle)),max(-5*sqrt(vartau),min(5*sqrt(vartau),tau.mle)))
       ests.map <- rootSolve::multiroot(est.eqs, in.vals)$root
+      # MAP Standard Errors for tau and theta
+      se.tau.map <- sum(alpha.par^2)^(-0.5)
+      eta <- a.par*ests.map[1] - b.par
+      I.theta <- sum(a.par^2*numwords.p*dnorm(eta)^2/(pnorm(eta)*(1-pnorm(eta))))
+      se.theta.map <- 1/sqrt(I.theta)
       # MAP WCPM score
       if (is.null(external)) { #internal
         wrc.map <- sum(numwords.p*pnorm(a.par*ests.map[1] - b.par))
         secs.map <- sum(exp(beta.par - log(10) + log(numwords.p) - ests.map[2] + ((1/alpha.par)^2)/2))
         wcpm.map <- wrc.map/secs.map*60
         k.theta.map <- sum(a.par*numwords.p*dnorm( a.par*ests.map[1] - b.par ))/sum(numwords.p*pnorm( a.par*ests.map[1] - b.par ))
-        se.wcpm.map <- wcpm.map*(k.theta.map^2*se.theta.mle^2 + se.tau^2)^0.5
+        se.wcpm.map <- wcpm.map*(k.theta.map^2*se.theta.map^2 + se.tau^2)^0.5
       } else {
         # if external, will calculate with external a, b, alpha, and beta
         wrc.map <- sum(numwords.p.external*pnorm(a.par.external*ests.map[1] - b.par.external))
         secs.map <- sum(exp(beta.par.external - log(10) + log(numwords.p.external) - ests.map[2] + ((1/alpha.par.external)^2)/2))
         wcpm.map <- wrc.map/secs.map*60
         k.theta.map <- sum(a.par.external*numwords.p.external*dnorm( a.par.external*ests.map[1] - b.par.external ))/sum(numwords.p.external*pnorm( a.par.external*ests.map[1] - b.par.external ))
-        se.wcpm.map <- wcpm.map*(k.theta.map^2*se.theta.mle^2 + se.tau^2)^0.5
+        se.wcpm.map <- wcpm.map*(k.theta.map^2*se.theta.map^2 + se.tau^2)^0.5
       }
       # End of MAP estimation
 
@@ -578,8 +583,8 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
                     tau.map=ests.map[2],
                     theta.map=ests.map[1],
                     # add these two columns, similar to EAP output
-                    se.tau.map=ests.map[2],
-                    se.theta.map=ests.map[1],
+                    se.tau.map=se.tau.map,
+                    se.theta.map=se.theta.map,
                     wrc.map, secs.map, wcpm.map, se.wcpm.map)
       return(out)
     } else if (Estimator == "eap") {
