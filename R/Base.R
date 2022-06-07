@@ -595,7 +595,9 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
                     # add these two columns, similar to EAP output
                     se.tau.map=se.tau.map,
                     se.theta.map=se.theta.map,
-                    wrc.map, secs.map, wcpm.map, se.wcpm.map)
+                    wrc.map, secs.map,
+                    n.pass.wcpm, n.words.total.wcpm,
+                    wcpm.map, se.wcpm.map)
       return(out)
     } else if (Estimator == "eap") {
       # flog.info(paste(paste("Output", est),"WCPM score"), name = "orfrlog")
@@ -661,6 +663,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
                     se.theta.eap = se.quad[1],
                     wrc.eap = wrc.quad,
                     secs.eap = secs.quad,
+                    n.pass.wcpm, n.words.total.wcpm,
                     wcpm.eap = wcpm.quad,
                     se.wcpm.eap = se.wcpm.quad)
       return(out)
