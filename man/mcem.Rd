@@ -5,7 +5,8 @@
 \title{This is an interface function to call and run mcem.}
 \usage{
 mcem(
-  object,
+  data = NA,
+  stu.data = NA,
   studentid = "",
   passageid = "",
   numwords.p = "",
@@ -20,11 +21,23 @@ mcem(
 )
 }
 \arguments{
-\item{object}{- reading data object comes from prep function}
+\item{data}{- reading data object comes from prep function}
 
-\item{k.in}{= number of imputations, default is 5}
+\item{stu.data}{- student reading data}
 
-\item{reps.in}{= number of Monte-Carlo iterations, default is 2}
+\item{studentid}{The column name in the data that represents the unique student identifier.}
+
+\item{passageid}{The column name in the data that represents the unique passage identifier.}
+
+\item{numwords.p}{The column name in the data that represents the number of words in a passage.}
+
+\item{wrc}{The column name in the data that represents the words read correctly for each case.}
+
+\item{time}{The column name in the data that represents the time, in seconds, for each case.}
+
+\item{k.in}{- number of imputations, default is 5}
+
+\item{reps.in}{- number of Monte-Carlo iterations, default is 2}
 
 \item{ests.in}{- if not given, mom function will be called and get est.in output}
 

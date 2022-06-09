@@ -17,9 +17,15 @@
 #' http://www.gnu.org/licenses/
 #'
 #'
-#' @param object - reading data object comes from prep function
-#' @param k.in    = number of imputations, default is 5
-#' @param reps.in = number of Monte-Carlo iterations, default is 2
+#' @param data - reading data object comes from prep function
+#' @param stu.data - student reading data
+#' @param studentid The column name in the data that represents the unique student identifier.
+#' @param passageid The column name in the data that represents the unique passage identifier.
+#' @param numwords.p The column name in the data that represents the number of words in a passage.
+#' @param wrc The column name in the data that represents the words read correctly for each case.
+#' @param time The column name in the data that represents the time, in seconds, for each case.
+#' @param k.in    - number of imputations, default is 5
+#' @param reps.in - number of Monte-Carlo iterations, default is 2
 #' @param ests.in - if not given, mom function will be called and get est.in output
 #' @param est - estimator keyword, mcem or mcmc
 #' @param se - standard error keyword, default is analytic
@@ -27,27 +33,27 @@
 #'
 #' @return MCEM list, MCMC list
 #' @export
-mcem <- function(object, studentid="",passageid="",numwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in,
+mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in,
                  est="mcem",se="analytic",verbose=FALSE) {
   # loading logger
   log.initiating()
 
   if (studentid != "") {
     #create wide data
-    object <- prepwide(object,studentid,passageid,numwords.p,wrc,time)
+    data <- prepwide(stu.data,studentid,passageid,numwords.p,wrc,time)
   }
 
   if (est == "mcem") {
-    dat <- object
+    dat <- data
     return(
       run.mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,verbose=verbose)
     )
   } else { # for MCMC, mcem parameters are necessary
     # Check MCEM object
-    if (class(object)[1] == "mcem") {
+    if (class(data)[1] == "mcem") {
       flog.info("Using mcem parameter for MCMC", name = "orfrlog")
 
-      MCEM <- object
+      MCEM <- data
       return(
         #        runBayes(mcem=MCEM,cases)
       )
@@ -76,9 +82,14 @@ mcem <- function(object, studentid="",passageid="",numwords.p="",wrc="",time="",
 #' A copy of the GNU General Public License is available at
 #' http://www.gnu.org/licenses/
 #'
-#' @param object - mcem class object
+#' @param calib.data - mcem class object
 #' @param stu.data - student reading data
-#' @param cases - student id vectors
+#' @param studentid The column name in the data that represents the unique student identifier.
+#' @param passageid The column name in the data that represents the unique passage identifier.
+#' @param numwords.p The column name in the data that represents the number of words in a passage.
+#' @param wrc The column name in the data that represents the words read correctly for each case.
+#' @param time The column name in the data that represents the time, in seconds, for each case.
+#' @param cases - student id vectors, will directly use passage data if no calib.data provided
 #' @param est - estimator keyword / c("mle", "map", "eap")
 #' @param se - standard error keyword / c("analytic", "bootstrap")
 #' @param wo - wcpm option / c("internal", "external"), default is internal
@@ -88,27 +99,27 @@ mcem <- function(object, studentid="",passageid="",numwords.p="",wrc="",time="",
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
-wcpm <- function(object, studentid="",passageid="",season="",grade="",numwords.p="",wrc="",time="", stu.data=data, cases=NA,
+wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season="",grade="",numwords.p="",wrc="",time="", cases=NA,
                  est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, external=NULL) {
   # loading logger
   log.initiating()
-  # if (studentid != "" & class(object)[1] != "mcem" ) {
 
-  if (class(object)[1] != "mcem" ) {
+  if (class(calib.data)[1] != "mcem" ) {
     #call mcem
-    MCEM <- mcem(object,studentid,passageid,numwords.p,wrc,time,est="mcem")
+    calib.data <- mcem(stu.data=stu.data,studentid=studentid,passageid=passageid,
+                       numwords.p=numwords.p,wrc=wrc,time=time,est="mcem")
     #create long data
-    stu.data <- preplong(object,studentid,passageid,season,grade,numwords.p,wrc,time)
+    stu.data <- preplong(stu.data,studentid,passageid,season,grade,numwords.p,wrc,time)
     #    pass.data <- MCEM$pass.param
-    object <- MCEM
+    #    calib.data <- MCEM
   }
 
   # Check MCEM object
   if (wo=="internal") { # internal, object must be mcem object
-    if (class(object)[1] == "mcem") {
-      MCEM <- object
+    if (class(calib.data)[1] == "mcem") {
+      #      MCEM <- calib.data
       # assign pass.data
-      pass.data <- MCEM$pass.param
+      pass.data <- calib.data$pass.param
     } else { # if no MCEM object stop running
       flog.info("Missed MCEM object, end wcpm process", name = "orfrlog")
       return(NULL)
@@ -134,7 +145,7 @@ wcpm <- function(object, studentid="",passageid="",season="",grade="",numwords.p
   bootstrap.out <- tibble()
   error_case <- tibble()
   if (se == "analytic") {
-    run.wcpm(object, stu.data, pass.data, cases, perfect.cases, est, lo = -4, hi = 4, q = 100, kappa = 1, external=external)
+    run.wcpm(calib.data, stu.data, pass.data, cases, perfect.cases, est, lo = -4, hi = 4, q = 100, kappa = 1, external=external)
   } else if (se == "bootstrap"){ #for bootstrap
 
     RE_TRY <- failsafe # Define retry, if 0, no retry
@@ -148,7 +159,7 @@ wcpm <- function(object, studentid="",passageid="",season="",grade="",numwords.p
       flog.info(paste("Boostrap running for case:", cases$cases[i]), name = "orfrlog")
       t_case = data.frame(cases=cases$cases[i])
       tryCatchLog(
-        temp <- getBootstrapSE(object, stu.data, case=t_case, perfect.cases, est, kappa=1,bootstrap=bootstrap),
+        temp <- getBootstrapSE(calib.data, stu.data, case=t_case, perfect.cases, est, kappa=1,bootstrap=bootstrap),
         error=function(e) {
           flog.info(paste("Running error:", e), name = "orfrlog")
         }

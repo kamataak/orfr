@@ -384,15 +384,16 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in,verbose=FALSE) {
 #' 07/30/2021 Modified wcpm function based on Sarunya's update
 #'
 #' @param object = MCEM object, if not be given will occur error and stop running
-#' @param stu.data = estimate parameters data
-#' @param pass.data = student response passage data
+#' @param stu.data = student response passage data
+#' @param pass.data = estimate parameters data
 #' @param cases = student season id vector
-#' @param est - estimator, c("mle", "map", "eap"), default "map"
+#' @param est = estimator, c("mle", "map", "eap"), default "map"
 #' @param perfect.cases = perfect accurate case
 #' @param lo = default -4
 #' @param hi = default 4
 #' @param q  = default 100
 #' @param kappa  = default 1
+#' @param external = if not NULL, will use not student read passages for estimating
 #'
 #' @import rootSolve
 #' @import doParallel
@@ -422,10 +423,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
   flog.info(paste(paste("Output", est),"WCPM score"), name = "orfrlog")
 
   est.theta.tau <- function(stu.data, pass.data, case, lo = -4, hi = 4, q = 100, external=NULL) {
-    # print(case)
-    #    stu.data <- dat$data.raw
-    #    pass.data <- new_passage_MCEM$pass.param
-    #    case <- cases$cases[1]
+
     case_split <- unlist(str_split(case, "_"))
     stu.dat01 <- stu.data %>% filter(stu.data$student.id==case_split[1], stu.data$occasion==case_split[2])
     pass.read <- stu.dat01 %>% select(passage.id)
@@ -433,7 +431,6 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     # passage.id should be included in MCEM object
     pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage.id")
     n.pass <- nrow(pass.dat01)
-
 
     numwords.total <- stu.dat01 %>% select(numwords.p) %>% c() %>% unlist() %>% sum()
     grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
@@ -458,13 +455,13 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       numwords.p.external <- pass.data %>% filter(passage.id %in% external) %>% select(numwords.p) %>% c() %>% unlist()
     }
 
-    # Compute n.pass.wcpm and n.words.total.wcpm
+    # Compute n.pass.wcpm and numwords.total.wcpm
     if (is.null(external)) {
       n.pass.wcpm <- n.pass
-      n.words.total.wcpm <- sum(numwords.p)
+      numwords.total.wcpm <- sum(numwords.p)
     } else {
       n.pass.wcpm <- length(external)
-      n.words.total.wcpm <- sum(numwords.p.external)
+      numwords.total.wcpm <- sum(numwords.p.external)
     }
 
     # Using MCEM to calculate rho and vartau
@@ -538,7 +535,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
                     se.tau.mle=se.tau,
                     se.theta.mle,
                     wrc.mle=wrc.mle0, secs.mle=secs.mle0,
-                    n.pass.wcpm, n.words.total.wcpm,
+                    n.pass.wcpm,numwords.total.wcpm,
                     wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
       return(out)
     } else if (Estimator == "map") {
@@ -596,7 +593,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
                     se.tau.map=se.tau.map,
                     se.theta.map=se.theta.map,
                     wrc.map, secs.map,
-                    n.pass.wcpm, n.words.total.wcpm,
+                    n.pass.wcpm,numwords.total.wcpm,
                     wcpm.map, se.wcpm.map)
       return(out)
     } else if (Estimator == "eap") {
@@ -663,7 +660,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
                     se.theta.eap = se.quad[1],
                     wrc.eap = wrc.quad,
                     secs.eap = secs.quad,
-                    n.pass.wcpm, n.words.total.wcpm,
+                    n.pass.wcpm,numwords.total.wcpm,
                     wcpm.eap = wcpm.quad,
                     se.wcpm.eap = se.wcpm.quad)
       return(out)
