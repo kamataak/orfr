@@ -115,16 +115,16 @@ scores for all cases in the data in the next step.
 **Step 3:** Run the `wcpm()` function to estimate WCPM scores for
 selected cases. Note that we pass the output object `test_MCEM` from the
 passage calibration step, as well as the manipulated data `datalong`
-from Step 1. Also, if the `cases =` argument is omitted, WCPM scores
-will be estimated for all cases in the data.
+from Step 1. If the `cases =` argument is omitted, WCPM scores will be
+estimated for all cases in the data.
 
 ``` r
 test_WCPMEAP <- wcpm(calib.data=test_MCEM, 
                      stu.data = datalong,
                      cases = sample.cases, 
-                     est = "eap", 
+                     est = "map", 
                      se = "analytic")
-summary(test_WCPMEAP)
+summary(test_WCPM_MAP)
 ```
 
 Also, we can specify a set of passages to scale the WCPM scores. If WCPM
@@ -141,9 +141,9 @@ test_WCPMEAP_EXT <- wcpm(calib.data=test_MCEM,
                      stu.data = datalong,
                      cases = sample.cases, 
                      external = c("22007","22013","22036","22043","22048","22079"),
-                     est = "eap", 
+                     est = "map", 
                      se = "analytic")
-summary(test_WCPMEAP_EXT)
+summary(test_WCPM_MAP_EXT)
 ```
 
 ** Alternatively, we can run the `wcpm()`
@@ -162,12 +162,12 @@ test_WCPMEAP <- wcpm(calib.data=test_MCEM,
                      time = "sec",
                      cases = sample.cases, 
                      external = c("22007","22013","22036","22043","22048","22079"),
-                     est = "eap", 
+                     est = "map", 
                      se = "analytic")
-summary(test_WCPMEAP)
+summary(test_WCP_MEAP_ALT)
 ```
 
-The package also contains calibrated passage data `MCME`, in which
+The package also contains calibrated passage data `MCEM`, in which
 passages were calibrated with much larger sample.
 
 Please see the [package website](https://kamataak.github.io/orfr/) for
