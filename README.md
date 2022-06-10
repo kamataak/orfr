@@ -60,7 +60,7 @@ View(passage)
 Calibrate the passages using the `mcem()` function.
 
 ``` r
-test_MCEM <- mcem(passage,
+test_MCEM <- mcem(stu.data=passage,
                   studentid = "id.student",
                   passageid = "id.passage",
                   numwords.p = "numwords.pass",
@@ -119,7 +119,7 @@ from Step 1. Also, if the `cases =` argument is omitted, WCPM scores
 will be estimated for all cases in the data.
 
 ``` r
-test_WCPMEAP <- wcpm(test_MCEM, 
+test_WCPMEAP <- wcpm(calib.data=test_MCEM, 
                      stu.data = datalong,
                      cases = sample.cases, 
                      est = "eap", 
@@ -137,7 +137,7 @@ estimated WCPM scores to be comparable between students for
 cross-sectional data, as well as within students for longitudinal data.
 
 ``` r
-test_WCPMEAP_EXT <- wcpm(test_MCEM, 
+test_WCPMEAP_EXT <- wcpm(calib.data=test_MCEM, 
                      stu.data = datalong,
                      cases = sample.cases, 
                      external = c("22007","22013","22036","22043","22048","22079"),
@@ -146,12 +146,12 @@ test_WCPMEAP_EXT <- wcpm(test_MCEM,
 summary(test_WCPMEAP_EXT)
 ```
 
-**\[Not yet implemented\]** Alternatively, we can run the `wcpm()`
-function without **Step 1** above, by entering the original data
+** Alternatively, we can run the `wcpm()`
+function without Step 1** above, by entering the original data
 `passage` directly as follows.
 
 ``` r
-test_WCPMEAP <- wcpm(test_MCEM, 
+test_WCPMEAP <- wcpm(calib.data=test_MCEM, 
                      stu.data = passage,
                      studentid = "id.student",
                      passageid = "id.passage",
