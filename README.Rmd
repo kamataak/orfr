@@ -57,22 +57,16 @@ test_MCEM
 
 To estimate WCPM scores, we can do in three steps. 
 
-**Step 1:** Prepare the data using the `preplong()` function, where required variables for the `wcpm()` function are prepared, including changing variable names and a generation of the natural-logarithm of the time data. In addition, we can use another utility function `get.cases()` to generate a list of unique cases with the output of the `preplong()` function.  
+**Step 1:** Prepare the data using the `prep()` function, where required variables for the `wcpm()` function are prepared, including changing variable names and a generation of the natural-logarithm of the time data. In addition, we can use another utility function `get.cases()` to generate a list of unique cases with the output of the `prep()` function. The output from prep() function has two lists: data.long is a long format of student response data, data.wide is a wide format of the natural-logarithm of the time data.   
 
 ```{r eval = F}
-datalong <- preplong(data = passage,
-                     studentid = "id.student",
-                     passageid = "id.passage",
-                     season = "occasion",
-                     grade = "grade",
-                     numwords.p = "numwords.pass",
-                     wrc = "wrc",
-                     time = "sec")
+data <- prep(data = passage,
+             vars=c("id.student","occasion","grade","id.passage","numwords.pass","wrc","sec"))
 ```
 
 Generate a list of unique cases:
 ```{r eval = F}
-get.cases(datalong)
+get.cases(data$data.long)
 ```
 
 **Step 2:** Specify a list of cases for which WCPM scores are estimated. It has to be a one-variable data frame with a variable name `cases`.  
@@ -89,7 +83,7 @@ If cases are not specified, the `wcpm()` function will estimate WCPM scores for 
 
 ```{r eval = F}
 test_WCPMEAP <- wcpm(calib.data=test_MCEM, 
-                     stu.data = datalong,
+                     stu.data = data$data.long,
                      cases = sample.cases, 
                      est = "map", 
                      se = "analytic")
@@ -102,7 +96,7 @@ The use of an external passage set is particularly important to make the estimat
 
 ```{r eval = F}
 test_WCPMEAP_EXT <- wcpm(calib.data=test_MCEM, 
-                     stu.data = datalong,
+                     stu.data = data$data.long,
                      cases = sample.cases, 
                      external = c("22007","22013","22036","22043","22048","22079"),
                      est = "map", 

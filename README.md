@@ -76,22 +76,16 @@ test_MCEM
 
 To estimate WCPM scores, we can do in three steps.
 
-**Step 1:** Prepare the data using the `preplong()` function, where
+**Step 1:** Prepare the data using the `prep()` function, where
 required variables for the `wcpm()` function are prepared, including
 changing variable names and a generation of the natural-logarithm of the
 time data. In addition, we can use another utility function
 `get.cases()` to generate a list of unique cases with the output of the
-`preplong()` function.
+`preplong()` function. The output from prep() function has two lists: data.long is a long format of student response data, data.wide is a wide format of the natural-logarithm of the time data.
 
 ``` r
-datalong <- preplong(data = passage,
-                     studentid = "id.student",
-                     passageid = "id.passage",
-                     season = "occasion",
-                     grade = "grade",
-                     numwords.p = "numwords.pass",
-                     wrc = "wrc",
-                     time = "sec")
+data <- prep(data = passage,
+             vars=c("id.student","occasion","grade","id.passage","numwords.pass","wrc","sec"))
 ```
 
 Generate a list of unique cases:
@@ -120,7 +114,7 @@ estimated for all cases in the data.
 
 ``` r
 test_WCPMEAP <- wcpm(calib.data=test_MCEM, 
-                     stu.data = datalong,
+                     stu.data = data$data.long,
                      cases = sample.cases, 
                      est = "map", 
                      se = "analytic")
@@ -138,7 +132,7 @@ cross-sectional data, as well as within students for longitudinal data.
 
 ``` r
 test_WCPMEAP_EXT <- wcpm(calib.data=test_MCEM, 
-                     stu.data = datalong,
+                     stu.data = data$data.long,
                      cases = sample.cases, 
                      external = c("22007","22013","22036","22043","22048","22079"),
                      est = "map", 
