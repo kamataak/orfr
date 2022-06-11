@@ -28,12 +28,12 @@
 #' @export
 summary.mcem <- function(object, digits=4,...) {
   z <- object
-  tab <- cbind(z$pass.param$passage_id,
+  tab <- cbind(z$pass.param$passage.id,
                as.vector(z$pass.param$a),
                as.vector(z$pass.param$b),
                z$pass.param$alpha,
                z$pass.param$beta)
-  colnames(tab)=c("Passage_id","a","      b","   alpha","   beta")
+  colnames(tab)=c("passage.id","a","      b","   alpha","   beta")
   rownames(tab)=paste0(c(rep(1:length(tab[,1]))),".")
   #  print(tab[, 1:3]) # only print a part of columns
   #  print(tab)
@@ -89,6 +89,15 @@ summary.wcpm <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
   dim(tt) <- c(dim(tb)[1],(cols_num-5))
   tt <- cbind(tb[,c(1:5)], tt)
   colnames(tt) <- getNames
+  # prepare for data output
+  if (nrow(tb) == 1) {
+    tm1 <- t(sapply(tb %>% select(-contains(c("occasion"))), as.numeric))
+  } else {
+    tm1 <- sapply(tb %>% select(-contains(c("occasion"))), as.numeric)
+  }
+  #  tm1 <- sapply(tb %>% select(-contains(c("occasion"))), as.numeric)
+  tm2 <- tb %>% select("occasion")
+  tb <- cbind(tm1, tm2)[,c(1,cols_num,2:(cols_num-1))]
   if (verbose == TRUE) {
     # only verbose TRUE will print out on screen
     print(tt)
@@ -151,6 +160,15 @@ summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE,fact
       dim(tt) <- c(nrow(tb),(cols_num-5))
       tt <- cbind(tb[,c(1:5)], tt)
       colnames(tt) <- getNames
+      # prepare for data output
+      if (nrow(tb) == 1) {
+        tm1 <- t(sapply(tb %>% select(-contains(c("occasion"))), as.numeric))
+      } else {
+        tm1 <- sapply(tb %>% select(-contains(c("occasion"))), as.numeric)
+      }
+
+      tm2 <- tb %>% select("occasion")
+      tb <- cbind(tm1, tm2)[,c(1,cols_num,2:(cols_num-1))]
       if (verbose == TRUE) {
         # only verbose TRUE will print out on screen
         print.noquote(tt)

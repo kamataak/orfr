@@ -131,6 +131,7 @@ get.cases <- function(data) {
   cases <- data %>% select(student.id,occasion) %>% unique() %>%
     unite("cases", student.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
     select(cases)
+  print(cases)
   return(invisible(cases))
 }
 #' Returns perfect cases (student and occasion) in which every word was read correctly.
@@ -156,7 +157,6 @@ get.perfectcases <- function(data) {
 #'
 #' @return data frame
 #'
-#' @export
 preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
   vars <- c(studentid,passageid,season,grade,numwords.p,wrc,time)
   dat <- data %>%
@@ -184,7 +184,7 @@ preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
 #' @param wrc The column name in the data that represents the words read correctly for each case.
 #' @param time The column name in the data that represents the time, in seconds, for each case.
 #'
-#' @examples
+#' @example
 #' data("passage")
 #'
 #' prepwide(passage,
@@ -194,7 +194,6 @@ preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
 #'  wrc = "wrc",
 #'  time = "sec")
 #'
-#' @export
 prepwide <- function(data, studentid, passageid, numwords.p, wrc, time){
   vars <- c(studentid,passageid,numwords.p,wrc,time)
   dat <- data %>%
