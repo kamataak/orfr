@@ -24,7 +24,7 @@
 \item{factor.scores}{- theta and tau output flag, default is FALSE}
 }
 \value{
-
+bootstrap data set
 }
 \description{
 Copyright (C) 2021 The ORF Project Team

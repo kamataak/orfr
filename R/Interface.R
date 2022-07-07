@@ -28,31 +28,80 @@
 #' @param reps.in - number of Monte-Carlo iterations, default is 2
 #' @param ests.in - if not given, mom function will be called and get est.in output
 #' @param est - estimator keyword, mcem or mcmc
-#' @param se - standard error keyword, default is analytic
+#' @param se - standard error keyword, analytic or bootstrap, default is analytic,
 #' @param verbose - boolean, if shows the summary, default is FALSE
 #'
 #' @return MCEM list, MCMC list
 #' @export
-mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in,
+mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in=NA,
                  est="mcem",se="analytic",verbose=FALSE) {
   # loading logger
   log.initiating()
-
+  
   if (studentid != "") {
     #create wide data
     data <- prepwide(stu.data,studentid,passageid,numwords.p,wrc,time)
   }
-
+  
   if (est == "mcem") {
-    dat <- data
-    return(
-      run.mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,verbose=verbose)
-    )
+    #    dat <- data
+    #return(
+    # run.mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,verbose=verbose)
+    #)  
+    # test
+    # if (is.na(ests.in)) {
+    #   ests.in <- mom(data$Y, data$logT10, data$N, data$I)      
+    # }
+    flog.info("Begin mcem process", name = "orfrlog")    
+    MCEMests <- run.mcem(data$Y, data$logT10, data$N, data$I,
+                         k.in=8, reps.in=3,ests.in=ests.in)
+    
+    MCEMout <- c(MCEMests$a, MCEMests$b, MCEMests$alpha,
+                 MCEMests$beta, MCEMests$vartau, MCEMests$rho)
+    if (se == "analytic") {
+      CV.analytic <- numerical.cov(data$Y, data$logT10, data$N, data$I,
+                                   MCEMout,h.val=1e-10, M=100)
+    } else { # bootstrap
+      CV.analytic <- boot.cov(data$Y, data$logT10, data$N, data$I,
+                              k.in=8, reps.in=3, B=10)
+      # an alternative function
+      # CV.analytic <- bootmodel.cov(data$Y, data$logT10, data$N, data$I,
+      #                         k.in=8, reps.in=3,B=10)
+      
+    }
+    SE.analytic <- sqrt(diag(CV.analytic))
+    
+    pass.param <-  tibble(
+      a = MCEMests$a,
+      b = MCEMests$b,
+      alpha = MCEMests$alpha,
+      beta = MCEMests$beta,
+      se_a = SE.analytic[1:length(MCEMests$a)],
+      se_b = SE.analytic[(length(MCEMests$a)+1):(length(MCEMests$a)+length(MCEMests$b))],
+      se_alpha = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+1):(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha))],
+      se_beta = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+1):(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta))],
+      passage.id = as.numeric(colnames(data$Y)),
+      numwords.p = data$N)
+    hyper.param <- tibble(vartau = MCEMests$vartau,
+                          rho = MCEMests$rho,
+                          se_vartau = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta)+1)],
+                          se_rho = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta)+2)])
+    MCEM.ests <- list(pass.param = pass.param,
+                      hyper.param = hyper.param)
+    # check if shows the summary
+    if (verbose == TRUE) {
+      summary.mcem(MCEM.ests)
+    }
+    class(MCEM.ests) <- "mcem" # define class
+    flog.info("End mcem process", name = "orfrlog")
+    return(invisible(MCEM.ests))
+    
+    
   } else { # for MCMC, mcem parameters are necessary
     # Check MCEM object
     if (class(data)[1] == "mcem") {
       flog.info("Using mcem parameter for MCMC", name = "orfrlog")
-
+      
       MCEM <- data
       return(
         #        runBayes(mcem=MCEM,cases)
@@ -103,7 +152,7 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
                  est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, external=NULL) {
   # loading logger
   log.initiating()
-
+  
   if (class(calib.data)[1] != "mcem" ) {
     #call mcem
     calib.data <- mcem(stu.data=stu.data,studentid=studentid,passageid=passageid,
@@ -113,7 +162,7 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
     #    pass.data <- MCEM$pass.param
     #    calib.data <- MCEM
   }
-
+  
   # Check MCEM object
   if (wo=="internal") { # internal, object must be mcem object
     if (class(calib.data)[1] == "mcem") {
@@ -132,28 +181,28 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
     print("Use user supplied list of parameters and response data")
     return(NULL)
   }
-
+  
   # Check if there is a perfect accurate case
   perfect.cases <- get.perfectcases(stu.data)
-
+  
   if (count(perfect.cases) != 0) {
     flog.info(paste("The perfect accurate case: ", perfect.cases$perfect.cases), name="orfrlog")
   } else {
     flog.info("There is no perfect accurate case.", name="orfrlog")
   }
-
+  
   bootstrap.out <- tibble()
   error_case <- tibble()
   if (se == "analytic") {
     run.wcpm(calib.data, stu.data, pass.data, cases, perfect.cases, est, lo = -4, hi = 4, q = 100, kappa = 1, external=external)
   } else if (se == "bootstrap"){ #for bootstrap
-
+    
     RE_TRY <- failsafe # Define retry, if 0, no retry
     j <- 0 # index for retry time
     i <- 1 # index for case loop
-
+    
     t_size <- nrow(cases)
-
+    
     while (i <= t_size) {
       temp <- tibble()
       flog.info(paste("Boostrap running for case:", cases$cases[i]), name = "orfrlog")
@@ -164,7 +213,7 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
           flog.info(paste("Running error:", e), name = "orfrlog")
         }
       )
-
+      
       if (length(temp) > 2) { #without error
         bootstrap.out <- rbind(bootstrap.out,temp)
         j <- 0 # reset index of retry

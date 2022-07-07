@@ -131,7 +131,7 @@ summary.wcpm <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
 #' @param verbose show summary on screen, default TRUE
 #' @param factor.scores - theta and tau output flag, default is FALSE
 #'
-#' @return
+#' @return bootstrap data set
 #' @export
 summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE,factor.scores=FALSE) {
   z <- object
