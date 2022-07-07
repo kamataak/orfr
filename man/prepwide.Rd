@@ -26,14 +26,3 @@ logt10: a [tibble::tibble()] of words read correctly
 N: the number of cases per passage
 I: the number of passages
 }
-\examples{
-data("passage")
-
-prepwide(passage,
- studentid = "id.student",
- passageid = "id.passage",
- numwords.p = "numwords.pass",
- wrc = "wrc",
- time = "sec")
-
-}
