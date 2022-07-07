@@ -38,9 +38,9 @@ prep <- function(data, vars="") {
     flog.info(paste("Variable incorrect:", anydiff), name = "orfrlog")
     return
   }
-  
+
   dat <- data
-  
+
   if (length(vars) > 0) {
     # create_data
     for (i in 1:length(vars)) {
@@ -73,7 +73,7 @@ prep <- function(data, vars="") {
     dat <- data.frame(c1,c2,c3,c4,c5,c6,c7,lgsec)
     colnames(dat) <- c("student.id","passage.id","numwords.p","occasion","grade","wrc","sec","lgsec")
   }
-  
+
   tryCatch(
     expr = {
       Y <- dat %>% select(student.id, passage.id, wrc) %>%
@@ -111,14 +111,14 @@ prep <- function(data, vars="") {
       flog.info(w, name = "orfrlog")
     }
   )
-  
-  
+
+
   output <- list(data.long=dat,
                  data.wide=data.in)
   flog.info("End preparing data process", name = "orfrlog")
-  
+
   return(output)
-  
+
 }
 #' Returns cases (student and occasion) applied in [wcpm] function.
 #'
@@ -184,7 +184,7 @@ preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
 #' @param wrc The column name in the data that represents the words read correctly for each case.
 #' @param time The column name in the data that represents the time, in seconds, for each case.
 #'
-#' @examples 
+#' @examples
 #' data("passage")
 #'
 #' prepwide(passage,
@@ -225,46 +225,47 @@ prepwide <- function(data, studentid, passageid, numwords.p, wrc, time){
 }
 #' To exclude error passages
 #'
-#' @param passage 
+#' @param passage
 #'
 #' @return passage data set without error passages
 #' @export
 exclude_passages <- function(passage) {
   err_list <- get_errlist(passage)
   return (passage %>% filter(!(id.passage %in% err_list)))
-  
+
 }
 
 #' To get a string of error passages that have no at least two readers
 #'
-#' @param passage 
+#' @param passage
 #'
-#' @return a string of error passages  
+#' @return a string of error passages
 get_errlist <- function(passage) {
   # get unique passage list
   passage_ids <- as.matrix(passage %>% select(id.passage) %>% unique())
-  
+
   flag <- 0
   err_list <- c()
   for (i in 1:length(passage_ids)) {
     flag <- 0
-    #print(passage_ids[i])
-    set_a <- small_passage %>% filter(id.passage==passage_ids[i]) %>% select(id.student) 
-    for (j in i+1:length(passage_ids)) {
-      set_b <- small_passage %>% filter(id.passage==passage_ids[j]) %>% select(id.student)
-      if (nrow(intersect(set_a,set_b)) > 2) {
-        flag <- 1
-        #print("break")
-        break
+    print(passage_ids[i])
+    set_a <- small_passage %>% filter(id.passage==passage_ids[i]) %>% select(id.student)
+    for (j in 1:length(passage_ids)) {
+      if (j != i) {
+        set_b <- small_passage %>% filter(id.passage==passage_ids[j]) %>% select(id.student)
+        if (nrow(intersect(set_a,set_b)) > 2) {
+          flag <- 1
+          #print("break")
+          break
+        }
       }
     }
     if (flag == 0) {
-      #print(paste("got ",passage_ids[i]))
-      ll <- length(err_list)+1 
+      print(paste("got ",passage_ids[i]))
+      ll <- length(err_list)+1
       err_list[ll] <- passage_ids[i]
     }
-    
+
   }
   return (err_list)
 }
-
