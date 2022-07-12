@@ -62,11 +62,11 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
       CV.analytic <- numerical.cov(data$Y, data$logT10, data$N, data$I,
                                    MCEMout,h.val=1e-10, M=100)
     } else { # bootstrap
-      CV.analytic <- boot.cov(data$Y, data$logT10, data$N, data$I,
-                              k.in=8, reps.in=3, B=10)
+      # CV.analytic <- boot.cov(data$Y, data$logT10, data$N, data$I,
+      #                         k.in=8, reps.in=3, B=10)
       # an alternative function
-      # CV.analytic <- bootmodel.cov(data$Y, data$logT10, data$N, data$I,
-      #                              MCEMout,k.in=8, reps.in=3,B=10)
+      CV.analytic <- bootmodel.cov(data$Y, data$logT10, data$N, data$I,
+                                   MCEMout,k.in=8, reps.in=3,B=10)
 
     }
     SE.analytic <- sqrt(diag(CV.analytic))

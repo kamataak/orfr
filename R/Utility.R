@@ -249,10 +249,10 @@ get_errlist <- function(passage) {
   for (i in 1:length(passage_ids)) {
     flag <- 0
     print(passage_ids[i])
-    set_a <- small_passage %>% filter(id.passage==passage_ids[i]) %>% select(id.student)
+    set_a <- passage %>% filter(id.passage==passage_ids[i]) %>% select(id.student)
     for (j in 1:length(passage_ids)) {
       if (j != i) {
-        set_b <- small_passage %>% filter(id.passage==passage_ids[j]) %>% select(id.student)
+        set_b <- passage %>% filter(id.passage==passage_ids[j]) %>% select(id.student)
         if (nrow(intersect(set_a,set_b)) > 2) {
           flag <- 1
           #print("break")
