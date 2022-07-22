@@ -153,40 +153,37 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
   # loading logger
   log.initiating()
 
-  if (class(calib.data)[1] != "mcem" ) {
-    #call mcem
-    calib.data <- mcem(stu.data=stu.data,studentid=studentid,passageid=passageid,
-                       numwords.p=numwords.p,wrc=wrc,time=time,est="mcem")
-    #create long data
+  # if (class(calib.data)[1] != "mcem" ) {
+  #   #call mcem
+  #   calib.data <- mcem(stu.data=stu.data,studentid=studentid,passageid=passageid,
+  #                      numwords.p=numwords.p,wrc=wrc,time=time,est="mcem")
+  #   #create long data
+  #   stu.data <- preplong(stu.data,studentid,passageid,season,grade,numwords.p,wrc,time)
+  #   #    pass.data <- MCEM$pass.param
+  #   #    calib.data <- MCEM
+  # }
+  if (studentid != "") {
     stu.data <- preplong(stu.data,studentid,passageid,season,grade,numwords.p,wrc,time)
-    #    pass.data <- MCEM$pass.param
-    #    calib.data <- MCEM
+  }
+  # Check MCEM object
+  if (class(calib.data)[1] == "mcem") {
+    #      MCEM <- calib.data
+    # assign pass.data
+    pass.data <- calib.data$pass.param
+  } else { # if no MCEM object stop running
+    flog.info("Missed MCEM object, end wcpm process", name = "orfrlog")
+    return(NULL)
   }
 
-  # Check MCEM object
-  if (wo=="internal") { # internal, object must be mcem object
-    if (class(calib.data)[1] == "mcem") {
-      #      MCEM <- calib.data
-      # assign pass.data
-      pass.data <- calib.data$pass.param
-    } else { # if no MCEM object stop running
-      flog.info("Missed MCEM object, end wcpm process", name = "orfrlog")
-      return(NULL)
-    }
-  } else { # external,
-    #check and prepare data
-    #1. check if list of parameter includes a,b,alpha,beta
-    #2. check response data
-    #3. prepare data for running
-    print("Use user supplied list of parameters and response data")
-    return(NULL)
+  if (length(external) != 0) { # external,
+    print(paste("Use external passage:", paste(external, collapse = ",")))
   }
 
   # Check if there is a perfect accurate case
   perfect.cases <- get.perfectcases(stu.data)
 
   if (count(perfect.cases) != 0) {
-    flog.info(paste("The perfect accurate case: ", perfect.cases$perfect.cases), name="orfrlog")
+    flog.info(paste("The perfect accurate case: ", paste(perfect.cases$perfect.cases, collapse = ",")), name="orfrlog")
   } else {
     flog.info("There is no perfect accurate case.", name="orfrlog")
   }
