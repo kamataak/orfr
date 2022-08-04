@@ -79,7 +79,7 @@ sample.cases <- data.frame(cases = c("2056_fall", "2056_winter", "2056_spring"))
 
 If cases are not specified, the `wcpm()` function will estimate WCPM scores for all cases in the data in the next step.  
 
-**Step 3:** Run the `wcpm()` function to estimate WCPM scores for selected cases. Note that we pass the output object `test_MCEM` from the passage calibration step, as well as the manipulated data `datalong` from Step 1. If the `cases =` argument is omitted, WCPM scores will be estimated for all cases in the data.
+**Step 3:** Run the `wcpm()` function to estimate WCPM scores for selected cases. Note that we pass the output object `test_MCEM` from the passage calibration step, as well as the manipulated data `data$data.long` from Step 1. If the `cases =` argument is omitted, WCPM scores will be estimated for all cases in the data.
 
 ```{r eval = F}
 test_WCPMEAP <- wcpm(calib.data=test_MCEM, 
@@ -95,18 +95,18 @@ Also, we can specify a set of passages to scale the WCPM scores. If WCPM scores 
 The use of an external passage set is particularly important to make the estimated WCPM scores to be comparable between students for cross-sectional data, as well as within students for longitudinal data.
 
 ```{r eval = F}
-test_WCPMEAP_EXT <- wcpm(calib.data=test_MCEM, 
+test_WCPMMAP_EXT <- wcpm(calib.data=test_MCEM, 
                      stu.data = data$data.long,
                      cases = sample.cases, 
                      external = c("22007","22013","22036","22043","22048","22079"),
                      est = "map", 
                      se = "analytic")
-summary(test_WCPM_MAP_EXT)
+summary(test_WCPMMAP_EXT)
 ```
 
 **Alternatively, we can run the `wcpm()` function without Step 1** above, by entering the original data `passage` directly as follows. 
 ``` {r eval = F}
-test_WCPMEAP <- wcpm(calib.data=test_MCEM, 
+test_WCPMMAP <- wcpm(calib.data=test_MCEM, 
                      stu.data = passage,
                      studentid = "id.student",
                      passageid = "id.passage",
@@ -119,7 +119,7 @@ test_WCPMEAP <- wcpm(calib.data=test_MCEM,
                      external = c("22007","22013","22036","22043","22048","22079"),
                      est = "map", 
                      se = "analytic")
-summary(test_WCP_MEAP_ALT)
+summary(test_WCPMMAP)
 ```
 
 The package also contains calibrated passage data `MCEM`, in which passages were calibrated with much larger sample.  
