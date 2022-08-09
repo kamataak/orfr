@@ -57,7 +57,8 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in=NA,verbose=FALSE) {
     z <- par
     LP <- 0
     for (k in 1:Ik) {
-      LP <- LP + log(alpha[k]) + lchoose(N[k],Y[k]) + Y[k]*log(pnorm(a[k]*z-b[k])) + (N[k]-Y[k])*log(1-pnorm(a[k]*z-b[k]))
+      # LP <- LP + log(alpha[k]) + lchoose(N[k],Y[k]) + Y[k]*log(pnorm(a[k]*z-b[k])) + (N[k]-Y[k])*log(1-pnorm(a[k]*z-b[k]))
+      LP <- LP + log(alpha[k]) + dbinom(Y[k],N[k],pnorm(a[k]*z-b[k]),log = T)
     }
     LP <- -LP
     return(LP)
