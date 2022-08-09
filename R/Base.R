@@ -196,69 +196,50 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in=NA,verbose=FALSE) {
     }
   }
 
-  try_num = 0
-  while (TRUE) {
-    tryCatch(
-      expr = {
-        # MCEM algorithm can't initiate if any alpha values = inf
-        # Somewhat artificial solution to give starting values to EM:
-        try_num = try_num + 1
-        if (try_num > 5) {
-          flog.info("Running error with maximum trying!", name = "orfrlog")
-          break
-        }
+  # MCEM algorithm can't initiate if any alpha values = inf
+  # Somewhat artificial solution to give starting values to EM:
+  alpha.check <- ests.in$alpha
+  infIndex0 <- which(is.infinite(alpha.check)==0)
+  infIndex1 <- which(is.infinite(alpha.check)==1)
+  alpha.check[infIndex1] <- max(alpha.check[infIndex0])*10
+  ests.in$alpha <- alpha.check
 
-        alpha.check <- ests.in$alpha
-        infIndex0 <- which(is.infinite(alpha.check)==0)
-        infIndex1 <- which(is.infinite(alpha.check)==1)
-        alpha.check[infIndex1] <- max(alpha.check[infIndex0])*10
-        ests.in$alpha <- alpha.check
+  n <- dim(Y)[1]
+  z.in <- matrix(rep(0,n), nrow = n)
 
-        n <- dim(Y)[1]
-        z.in <- matrix(rep(0,n), nrow = n)
+  total.K <- rep(k.in[1],reps.in[1])
 
-        total.K <- rep(k.in[1],reps.in[1])
-
-        if (nK > 1) {
-          for (jj in 2:nK) {
-            total.K <- c(total.K,rep(k.in[jj],reps.in[jj]))
-          }
-        }
-        JJ <- length(total.K)
-
-        a.store <- matrix(rep(0,JJ*I),nrow = JJ)
-        alpha.store <- matrix(rep(0,JJ*I),nrow = JJ)
-        b.store <- matrix(rep(0,JJ*I),nrow = JJ)
-        beta.store <- matrix(rep(0,JJ*I),nrow = JJ)
-        rho.store <- matrix(rep(0,JJ),nrow = JJ)
-        vartau.store <- matrix(rep(0,JJ),nrow = JJ)
-        se_a.store <- matrix(rep(0,JJ),nrow = JJ)
-        se_b.store <- matrix(rep(0,JJ),nrow = JJ)
-        se_alpha.store <- matrix(rep(0,JJ),nrow = JJ)
-        se_beta.store <- matrix(rep(0,JJ),nrow = JJ)
-
-        for (jj in 1:JJ) {
-
-          EM.iter <- MCEM_algorithm_one_iteration(Y,logT10,N,I,ests.in,total.K[jj],z.in)
-          ests.in <- EM.iter
-          a.store[jj,] <- ests.in$a
-          b.store[jj,] <- ests.in$b
-          alpha.store[jj,] <- ests.in$alpha
-          beta.store[jj,] <- ests.in$beta
-          vartau.store[jj] <- ests.in$vartau
-          rho.store[jj] <- ests.in$rho
-          z.in <- ests.in$z.opt
-        }
-        break
-      },
-      error = function(w) {
-        #        print(paste("try_num:", try_num))
-        flog.info("Running error with bootstrap! trying again...", name = "orfrlog")
-        flog.info(w, name = "orfrlog")
-      }
-    )
-
+  if (nK > 1) {
+    for (jj in 2:nK) {
+      total.K <- c(total.K,rep(k.in[jj],reps.in[jj]))
+    }
   }
+  JJ <- length(total.K)
+
+  a.store <- matrix(rep(0,JJ*I),nrow = JJ)
+  alpha.store <- matrix(rep(0,JJ*I),nrow = JJ)
+  b.store <- matrix(rep(0,JJ*I),nrow = JJ)
+  beta.store <- matrix(rep(0,JJ*I),nrow = JJ)
+  rho.store <- matrix(rep(0,JJ),nrow = JJ)
+  vartau.store <- matrix(rep(0,JJ),nrow = JJ)
+  se_a.store <- matrix(rep(0,JJ),nrow = JJ)
+  se_b.store <- matrix(rep(0,JJ),nrow = JJ)
+  se_alpha.store <- matrix(rep(0,JJ),nrow = JJ)
+  se_beta.store <- matrix(rep(0,JJ),nrow = JJ)
+
+  for (jj in 1:JJ) {
+
+    EM.iter <- MCEM_algorithm_one_iteration(Y,logT10,N,I,ests.in,total.K[jj],z.in)
+    ests.in <- EM.iter
+    a.store[jj,] <- ests.in$a
+    b.store[jj,] <- ests.in$b
+    alpha.store[jj,] <- ests.in$alpha
+    beta.store[jj,] <- ests.in$beta
+    vartau.store[jj] <- ests.in$vartau
+    rho.store[jj] <- ests.in$rho
+    z.in <- ests.in$z.opt
+  }
+
   mean_a = a.store[JJ,]
   mean_b = b.store[JJ,]
   mean_alpha = alpha.store[JJ,]
