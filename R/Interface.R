@@ -28,13 +28,13 @@
 #' @param reps.in - number of Monte-Carlo iterations, default is 2
 #' @param ests.in - if not given, mom function will be called and get est.in output
 #' @param est - estimator keyword, mcem or mcmc
-#' @param se - standard error keyword, analytic or bootstrap, default is analytic,
+#' @param se - standard error keyword, analytic or bootstrap, default is bootstrap,
 #' @param verbose - boolean, if shows the summary, default is FALSE
 #'
 #' @return MCEM list, MCMC list
 #' @export
 mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in=NA,
-                 est="mcem",se="analytic",verbose=FALSE) {
+                 est="mcem",se="bootstrap",verbose=FALSE) {
   # loading logger
   log.initiating()
 
