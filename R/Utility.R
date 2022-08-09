@@ -28,72 +28,51 @@
 #'                    data.wide: list of Y, logT10, N, I)
 #'
 #' @export
-prep <- function(data, vars="") {
+prep <- function(data=data,studentid="",passageid="",season="",grade="",numwords.p="",wrc="",time="") {
   # loading logger
   log.initiating()
   flog.info("Begin preparing data process", name = "orfrlog")
-  check_set <- c("id.student","occasion","id.passage","grade","numwords.pass","wrc","sec")
-  anydiff <- setdiff(vars,check_set)
-  if (length(anydiff) != 0) { #if not same
-    flog.info(paste("Variable incorrect:", anydiff), name = "orfrlog")
-    return
-  }
+  #  col.names = c(studentid,passageid,numwords.p,season,grade,wrc,time)
+  col.labels <- c("student.id","passage.id","numwords.p","occasion","grade","wrc","sec","lgsec")
 
   dat <- data
-
-  if (length(vars) > 0) {
-    # create_data
-    for (i in 1:length(vars)) {
-      # print(i)
-      if (vars[i] == "id.student") {
-        c1 <- dat[i]
-      } else if (vars[i] == 'id.passage') {
-        c2 <- dat[i]
-      } else if (vars[i] == 'numwords.pass') {
-        c3 <- dat[i]
-      } else if (vars[i] == 'occasion') {
-        c4 <- dat[i]
-      } else if (vars[i] == 'grade') {
-        c5 <- dat[i]
-      } else if (vars[i] == 'wrc') {
-        c6 <- dat[i]
-      } else if (vars[i] == 'sec') {
-        c7 <- dat[i]
-        lgsec <- log(c7)
-      }
-    }
-    # dat <- data.frame(student.id=c1,
-    #                   passage.id=c2,
-    #                   numwords.p=c3,
-    #                   occasion=c4,
-    #                   grade=c5,
-    #                   sec=c6,
-    #                   wrc=c7,
-    #                   lgsec)
-    dat <- data.frame(c1,c2,c3,c4,c5,c6,c7,lgsec)
-    colnames(dat) <- c("student.id","passage.id","numwords.p","occasion","grade","wrc","sec","lgsec")
-  }
-
-  tryCatch(
+  tryCatch (
     expr = {
-      Y <- dat %>% select(student.id, passage.id, wrc) %>%
-        pivot_wider(names_from = passage.id, values_from = wrc) %>%
-        select(-student.id)
+      # create_data
+      c1 <- dat[studentid] # student.id
+      c2 <- dat[passageid] # passage.id
+      c3 <- dat[numwords.p] # numwords.p
+      c4 <- dat[season] # occasion
+      c5 <- dat[grade] # grade
+      c6 <- dat[wrc] # wrc
+      c7 <- dat[time] # sec
+      lgsec <- log(c7) # lgsec
+
+      dat <- data.frame(c1,c2,c3,c4,c5,c6,c7,lgsec)
+      colnames(dat) <- col.labels
+
+      tp <- as.data.frame(dat %>% select(student.id, passage.id, wrc) %>%
+                            pivot_wider(names_from = passage.id, values_from = wrc))
+
+      rownames(tp) <- as.character(tp$student.id)
+      Y <- tp %>% select(-student.id)
       Y <- Y[ , order(names(Y))] # sort by passage.id
       Y <- as.matrix(Y)
       for (i in 1:ncol(Y)) {
-        Y[,i]<-ifelse(is.na(Y[,i]),NaN,Y[,i])
+        Y[,i]<-ifelse(is.na(Y[,i]),NA,Y[,i]) #NaN
       }
-      logT <- dat %>%
-        mutate(lgsec=log(sec)) %>%
-        select(student.id, passage.id, lgsec) %>%
-        pivot_wider(names_from = passage.id, values_from = lgsec) %>%
-        select(-student.id)
+      logT <-  as.data.frame(dat %>%
+                               mutate(lgsec=log(sec)) %>%
+                               select(student.id, passage.id, lgsec) %>%
+                               pivot_wider(names_from = passage.id, values_from = lgsec) %>%
+                               select(-student.id))
+      rownames(logT) <- as.character(tp$student.id)
       logT <- logT[ , order(names(logT))] # sort by passage.id
-      N <- dat %>%
-        group_by(passage.id) %>% arrange(passage.id) %>% # sort by passage.id
-        summarise(numwords.pass=max(numwords.p)) %>%
-        select(-passage.id)
+      N <- as.data.frame(dat %>%
+                           group_by(passage.id) %>% arrange(passage.id) %>% # sort by passage.id
+                           summarise(numwords.pass=max(numwords.p)) %>%
+                           select(-passage.id))
+      rownames(N) <- colnames(Y)
       N <- pull(N)
       I <- length(N)
       N.matrix <- matrix(rep(as.matrix(N),dim(Y)[1]),nrow = dim(Y)[1], byrow = TRUE)
@@ -101,6 +80,13 @@ prep <- function(data, vars="") {
       logT10 <- logT10[ , order(names(logT10))]
       # data.in <- list(Y = Y, logT10 = logT10, N = N, I = I)
       data.in <- list(Y = Y, logT10 = logT10, N = N, I = I)
+
+
+      output <- list(data.long=dat,
+                     data.wide=data.in)
+      flog.info("End preparing data process", name = "orfrlog")
+
+      return(output)
     },
     warning = function(w) {
       flog.info("There was a warning message. Something is wrong!", name = "orfrlog")
@@ -111,14 +97,6 @@ prep <- function(data, vars="") {
       flog.info(w, name = "orfrlog")
     }
   )
-
-
-  output <- list(data.long=dat,
-                 data.wide=data.in)
-  flog.info("End preparing data process", name = "orfrlog")
-
-  return(output)
-
 }
 #' Returns cases (student and occasion) applied in [wcpm] function.
 #'
