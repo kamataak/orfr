@@ -28,13 +28,13 @@
 #' @param reps.in - number of Monte-Carlo iterations, default is 2
 #' @param ests.in - if not given, mom function will be called and get est.in output
 #' @param est - estimator keyword, mcem or mcmc
-#' @param se - standard error keyword, analytic or bootstrap, default is bootstrap,
+#' @param se - standard error keyword / c("none","analytic", "bootstrap"), default is none
 #' @param verbose - boolean, if shows the summary, default is FALSE
 #'
 #' @return MCEM list, MCMC list
 #' @export
 mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in=NA,
-                 est="mcem",se="bootstrap",verbose=FALSE) {
+                 est="mcem",se="none",verbose=FALSE) {
   # loading logger
   log.initiating()
 
@@ -44,50 +44,67 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
   }
 
   if (est == "mcem") {
-    #    dat <- data
-    #return(
-    # run.mcem(dat$Y,dat$logT10,dat$N,dat$I,k.in,reps.in,ests.in,verbose=verbose)
-    #)
-    # test
-    # if (is.na(ests.in)) {
-    #   ests.in <- mom(data$Y, data$logT10, data$N, data$I)
-    # }
-    flog.info("Begin mcem process", name = "orfrlog")
-    MCEMests <- run.mcem(data$Y, data$logT10, data$N, data$I,
-                         k.in=8, reps.in=3,ests.in=ests.in)
 
-    MCEMout <- c(MCEMests$a, MCEMests$b, MCEMests$alpha,
-                 MCEMests$beta, MCEMests$vartau, MCEMests$rho)
-    if (se == "analytic") {
-      CV.analytic <- numerical.cov(data$Y, data$logT10, data$N, data$I,
-                                   MCEMout,h.val=1e-10, M=100)
-    } else { # bootstrap
-      # CV.analytic <- boot.cov(data$Y, data$logT10, data$N, data$I,
-      #                         k.in=8, reps.in=3, B=10)
-      # an alternative function
-      CV.analytic <- bootmodel.cov(data$Y, data$logT10, data$N, data$I,
-                                   MCEMout,k.in=8, reps.in=3,B=10)
+    if (se == "none") {
+      flog.info("Begin mcem process without se", name = "orfrlog")
+      MCEMests <- run.mcem(data$Y,data$logT10,data$N,data$I, k.in=k.in,reps.in=reps.in,ests.in=ests.in,verbose=verbose)
 
+      pass.param <-  tibble(
+        a = MCEMests$a,
+        b = MCEMests$b,
+        alpha = MCEMests$alpha,
+        beta = MCEMests$beta,
+        passage.id = as.numeric(colnames(data$Y)),
+        numwords.p = data$N)
+      hyper.param <- tibble(vartau = MCEMests$vartau,
+                            rho = MCEMests$rho)
+      MCEM.ests <- list(pass.param = pass.param,
+                        hyper.param = hyper.param)
+    } else {
+      # test
+      # if (is.na(ests.in)) {
+      #   ests.in <- mom(data$Y, data$logT10, data$N, data$I)
+      # }
+      flog.info(paste("Begin mcem process with se",se), name = "orfrlog")
+
+      MCEMests <- run.mcem(data$Y, data$logT10, data$N, data$I,
+                           k.in=k.in, reps.in=reps.in,ests.in=ests.in)
+
+      MCEMout <- c(MCEMests$a, MCEMests$b, MCEMests$alpha,
+                   MCEMests$beta, MCEMests$vartau, MCEMests$rho)
+      if (se == "analytic") {
+        CV.analytic <- numerical.cov(data$Y, data$logT10, data$N, data$I,
+                                     MCEMout,h.val=1e-10, M=100)
+      } else { # bootstrap
+        # CV.analytic <- boot.cov(data$Y, data$logT10, data$N, data$I,
+        #                         k.in=8, reps.in=3, B=10)
+        # an alternative function
+        CV.analytic <- bootmodel.cov(data$Y, data$logT10, data$N, data$I,
+                                     MCEMout,k.in=k.in, reps.in=reps.in,B=10)
+
+      }
+      SE.analytic <- sqrt(diag(CV.analytic))
+
+      pass.param <-  tibble(
+        a = MCEMests$a,
+        b = MCEMests$b,
+        alpha = MCEMests$alpha,
+        beta = MCEMests$beta,
+        se_a = SE.analytic[1:length(MCEMests$a)],
+        se_b = SE.analytic[(length(MCEMests$a)+1):(length(MCEMests$a)+length(MCEMests$b))],
+        se_alpha = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+1):(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha))],
+        se_beta = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+1):(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta))],
+        passage.id = as.numeric(colnames(data$Y)),
+        numwords.p = data$N)
+      hyper.param <- tibble(vartau = MCEMests$vartau,
+                            rho = MCEMests$rho,
+                            se_vartau = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta)+1)],
+                            se_rho = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta)+2)])
+      MCEM.ests <- list(pass.param = pass.param,
+                        hyper.param = hyper.param)
     }
-    SE.analytic <- sqrt(diag(CV.analytic))
 
-    pass.param <-  tibble(
-      a = MCEMests$a,
-      b = MCEMests$b,
-      alpha = MCEMests$alpha,
-      beta = MCEMests$beta,
-      se_a = SE.analytic[1:length(MCEMests$a)],
-      se_b = SE.analytic[(length(MCEMests$a)+1):(length(MCEMests$a)+length(MCEMests$b))],
-      se_alpha = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+1):(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha))],
-      se_beta = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+1):(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta))],
-      passage.id = as.numeric(colnames(data$Y)),
-      numwords.p = data$N)
-    hyper.param <- tibble(vartau = MCEMests$vartau,
-                          rho = MCEMests$rho,
-                          se_vartau = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta)+1)],
-                          se_rho = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta)+2)])
-    MCEM.ests <- list(pass.param = pass.param,
-                      hyper.param = hyper.param)
+
     # check if shows the summary
     if (verbose == TRUE) {
       summary.mcem(MCEM.ests)
@@ -111,6 +128,7 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
       #      runBayes(object=dat,mcem=MCEM,wcpm=WCPM,cases)
     }
   }
+
 }
 
 #' This is an interface function to call and run wcpm or bootstrap.
@@ -140,7 +158,7 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
 #' @param time The column name in the data that represents the time, in seconds, for each case.
 #' @param cases - student id vectors, will directly use passage data if no calib.data provided
 #' @param est - estimator keyword / c("mle", "map", "eap")
-#' @param se - standard error keyword / c("analytic", "bootstrap")
+#' @param se - standard error keyword / c("analytic", "bootstrap"), default is analytic
 #' @param wo - wcpm option / c("internal", "external"), default is internal
 #' @param failsafe - retry time for bootstrap / default 0, can set to 5 ~ 50
 #' @param bootstrp - set K number of bootstrap / default 100
@@ -148,7 +166,7 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
 #'
 #' @return WCPM list or Bootstrap dataset
 #' @export
-wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season="",grade="",numwords.p="",wrc="",time="", cases=NA,
+wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season="",grade="",numwords.p="",wrc="",time="", cases=NULL,
                  est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, external=NULL) {
   # loading logger
   log.initiating()
@@ -179,11 +197,16 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
     print(paste("Use external passage:", paste(external, collapse = ",")))
   }
 
+  # Check cases
+  if (length(cases) == 0) {
+    print("Cases: ")
+    cases <- get.cases(stu.data)
+  }
   # Check if there is a perfect accurate case
   perfect.cases <- get.perfectcases(stu.data)
 
   if (count(perfect.cases) != 0) {
-    flog.info(paste("The perfect accurate case: ", paste(perfect.cases$perfect.cases, collapse = ",")), name="orfrlog")
+    flog.info(paste("The perfect accurate case: ", paste(perfect.cases$perfect.cases, collapse = ", ")), name="orfrlog")
   } else {
     flog.info("There is no perfect accurate case.", name="orfrlog")
   }
