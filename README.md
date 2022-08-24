@@ -1,12 +1,12 @@
 orfr
 ================
 
-## Model-Based Calibration and Scoring for Oral Reading Fluency Assessment Data with R
+# Model-Based Calibration and Scoring for Oral Reading Fluency Assessment Data with R
 
 `orfr` is an R package that allows model-based calibration and scoring
 for oral reading fluency (ORF) assessment data.
 
-### Installation:
+## Installation:
 
 To install `orf` package, follow the steps below.
 
@@ -28,7 +28,7 @@ if(!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
 remotes::install_github("kamataak/orfr")
 ```
 
-### Basic Usage:
+## Basic Usage:
 
 It is recommended that the data are prepared as a long-format data
 frame, where each row is data for a unique case, namely, a specific
@@ -50,7 +50,7 @@ students. Although the 85 students were assigned to all 12 passages, the
 number of passages read by the 85 students varied from 2 to 12 passages.
 The number of students per passage were between 59 to 79.
 
-Load required packages, and load/view the example data set `passage`.
+Load required packages, and load/view the example data set `passage2`.
 
 ``` r
 library(tidyverse)
@@ -58,12 +58,12 @@ library(orfr)
 View(passage2)
 ```
 
-#### Passage Calibration
+### Passage Calibration
 
-Calibrate the passages using the `mcem()` function.
+Calibrate the passages using the `mcem()` function by implementing the
+Monte Carlo EM algorithm described in Potgieter et al. (2017).
 
 ``` r
-system.time(
 MCEM_run <- mcem(stu.data=passage2,
                  studentid = "id.student",
                  passageid = "id.passage",
@@ -73,21 +73,20 @@ MCEM_run <- mcem(stu.data=passage2,
                  k.in = 5,
                  reps.in = 50,
                  est = "mcem")
-)
 MCEM_run
 ```
 
 By default, the standard errors for the model parameters are not
 estimated. This will allow one to increase the number of Monte-Carlo
-iteration `reps.in` to improve the quality of the estimates of the model
-parameters, while minimizing the computation time. The number of
-`reps.in` should be 50-100 in realistic calibrations. SE’s for model
-parameters are not required for running `wcpm()` function to estimate
-WCPM scores in the next step. In order to compute the standard errors
-for the model parameters, an additional argument `se = "analytical"` or
+iterations `reps.in` to improve the quality of the model parameter
+estimates, while minimizing the computation time. The number of
+`reps.in` should be 50 to 100 in realistic calibrations. SE’s for model
+parameters are not required for running the `wcpm()` function to
+estimate WCPM scores in the next step. If standard errors for model
+parameters are desired, an additional argument `se = "analytical"` or
 `se = "bootstrap"` needs to be added to the `mcem()` function.
 
-#### Estimating WCPM scores 1
+### Estimating WCPM scores 1
 
 To estimate WCPM scores, we can do in two steps.
 
@@ -129,30 +128,33 @@ we pass the output object `MCEM_run` from the passage calibration phase,
 as well as the manipulated data `data.long` from Step 1. By default,
 WCPM scores will be estimated for all cases in the data. Additionally,
 there are several estimator options and standard error estimation
-options.
+options. In this example, maximum a priori (MAP) estimators for model
+parameter estimation and analytic approach to estimate standard errors
+are used.
 
 ``` r
-WCPM_MAP_all <- wcpm(calib.data=MCEM_run, 
-                          stu.data = data$data.long,
-                          est = "map", 
-                          se = "analytic")
-summary(WCPM_MAP_all)
+WCPM_all <- wcpm(calib.data=MCEM_run, 
+                 stu.data = data$data.long,
+                 est = "map", 
+                 se = "analytic")
+summary(WCPM_all)
 ```
 
 If the computations of WCPM scores for only selected cases are desired,
 we can create a list of cases and provide the list by the `cases =`
 argument. The list of cases has to be a one-variable data frame with a
 variable name `cases`. The format of case values should be:
-`studentid_season`, just like the output of the `get.cases()` function.
+`studentid_season`, just like the output of the `get.cases()` function
+shown earlier in this document.
 
 ``` r
 sample.cases <- data.frame(cases = c("2033_fall", "2043_fall", "2089_fall"))
-WCPM_MAP_sample <- wcpm(calib.data=MCEM_run, 
-                             stu.data = data$data.long,
-                             cases = sample.cases,
-                             est = "map", 
-                             se = "analytic")
-summary(WCPM_MAP_sample)
+WCPM_sample <- wcpm(calib.data=MCEM_run, 
+                    stu.data = data$data.long,
+                    cases = sample.cases,
+                    est = "map", 
+                    se = "analytic")
+summary(WCPM_sample)
 ```
 
 Also, we can specify a set of passages to scale the WCPM scores. If WCPM
@@ -161,50 +163,48 @@ of passages the student read, the set of passages is referred to as an
 **external passage set**.
 
 The use of an external passage set is particularly important to make the
-estimated WCPM scores to be comparable between students for
-cross-sectional data, as well as within students for longitudinal data.
+estimated WCPM scores to be comparable between students who read
+different sets of passages, as well as within students for longitudinal
+data, where a student are likely to read different sets of passages.
 
 ``` r
-WCPM_MAP_ext <- wcpm(calib.data=MCEM_run, 
-                     stu.data = data$data.long,
-                     cases = sample.cases, 
-                     external = c("32004","32010","32015","32016","33003","33037"),
-                     est = "map", 
-                     se = "analytic")
-summary(WCPM_MAP_ext)
+WCPM_sample_ext1 <- wcpm(calib.data=MCEM_run, 
+                         stu.data = data$data.long,
+                         cases = sample.cases, 
+                         external = c("32004","32010","32015","32016","33003","33037"),
+                         est = "map", 
+                         se = "analytic")
+summary(WCPM_sample_ext1)
 ```
 
-#### Estimating WCPM scores 2
+### Estimating WCPM scores 2
 
 **Alternatively, we can run the `wcpm()` function without Step 1**
 above, by entering the original data `passage2` directly as follows.
 
 ``` r
-test_WCPM_MAP_ALT <- wcpm(calib.data=MCEM_run, 
-                     stu.data = passage2,
-                     studentid = "id.student",
-                     passageid = "id.passage",
-                     season = "occasion",
-                     grade = "grade",
-                     numwords.p = "numwords.pass",
-                     wrc = "wrc",
-                     time = "sec",
-                     cases = sample.cases, 
-                     external = c("32004","32010","32015","32016","33003","33037"),
-                     est = "map", 
-                     se = "analytic")
-summary(test_WCPM_MAP_ALT)
+WCPM_sample_ext2 <- wcpm(calib.data=MCEM_run, 
+                         stu.data = passage2,
+                         studentid = "id.student",
+                         passageid = "id.passage",
+                         season = "occasion",
+                         grade = "grade",
+                         numwords.p = "numwords.pass",
+                         wrc = "wrc",
+                         time = "sec",
+                         cases = sample.cases, 
+                         external = c("32004","32010","32015","32016","33003","33037"),
+                         est = "map", 
+                         se = "analytic")
+summary(WCPM_sample_ext2)
 ```
-
-The package also contains calibrated passage data `MCEM`, in which
-passages were calibrated with much larger sample.
 
 Please see the [package website](https://kamataak.github.io/orfr/) for
 more detailed usage of the package.
 
-### Citation
+## Citation
 
-### Copyright Statement
+## Copyright Statement
 
 Copyright (C) 2022 The ORF Project Team
 
