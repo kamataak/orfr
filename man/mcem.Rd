@@ -16,7 +16,7 @@ mcem(
   reps.in = 2,
   ests.in = NA,
   est = "mcem",
-  se = "analytic",
+  se = "none",
   verbose = FALSE
 )
 }
@@ -43,7 +43,7 @@ mcem(
 
 \item{est}{- estimator keyword, mcem or mcmc}
 
-\item{se}{- standard error keyword, analytic or bootstrap, default is analytic,}
+\item{se}{- standard error keyword / c("none","analytic", "bootstrap"), default is none}
 
 \item{verbose}{- boolean, if shows the summary, default is FALSE}
 }

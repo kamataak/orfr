@@ -14,7 +14,7 @@ wcpm(
   numwords.p = "",
   wrc = "",
   time = "",
-  cases = NA,
+  cases = NULL,
   est = "map",
   se = "analytic",
   wo = "internal",
@@ -42,7 +42,7 @@ wcpm(
 
 \item{est}{- estimator keyword / c("mle", "map", "eap")}
 
-\item{se}{- standard error keyword / c("analytic", "bootstrap")}
+\item{se}{- standard error keyword / c("analytic", "bootstrap"), default is analytic}
 
 \item{wo}{- wcpm option / c("internal", "external"), default is internal}
 

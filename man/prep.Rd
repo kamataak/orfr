@@ -4,7 +4,16 @@
 \alias{prep}
 \title{This file includes utilities of orfr package.}
 \usage{
-prep(data, vars = "")
+prep(
+  data = data,
+  studentid = "",
+  passageid = "",
+  season = "",
+  grade = "",
+  numwords.p = "",
+  wrc = "",
+  time = ""
+)
 }
 \arguments{
 \item{data}{= student response data}
