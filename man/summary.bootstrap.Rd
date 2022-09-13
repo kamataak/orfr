@@ -4,7 +4,7 @@
 \alias{summary.bootstrap}
 \title{summary the information of bootstrap class}
 \usage{
-summary.bootstrap(
+\method{summary}{bootstrap}(
   object,
   digits = 4,
   geterror = FALSE,
