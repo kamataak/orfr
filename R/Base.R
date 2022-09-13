@@ -532,7 +532,7 @@ bootmodel.cov <- function(Y,logT10,N,I,parms,k.in,reps.in,B) {
 #' @param stu.data = student response passage data
 #' @param pass.data = estimate parameters data
 #' @param cases = student season id vector
-#' @param est = estimator, c("mle", "map", "eap"), default "map"
+#' @param est = estimator, c("mle", "map", "eap", "mcmc"), default "map"
 #' @param perfect.cases = perfect accurate case
 #' @param lo = default -4
 #' @param hi = default 4

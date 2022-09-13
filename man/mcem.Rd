@@ -41,7 +41,7 @@ mcem(
 
 \item{ests.in}{- if not given, mom function will be called and get est.in output}
 
-\item{est}{- estimator keyword, mcem or mcmc}
+\item{est}{- estimator keyword, mcem or mcmc, default is mcem}
 
 \item{se}{- standard error keyword / c("none","analytic", "bootstrap"), default is none}
 

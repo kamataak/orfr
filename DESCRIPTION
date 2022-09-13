@@ -1,7 +1,7 @@
 Package: orfr
 Type: Package
 Title: The Model-based Approach to ORF Assessment Data 
-Version: 1.0.0
+Version: 1.1.0
 Author: c(
     person("Akihito", "Kamata", email = "", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-9570-1464")),
     person("Cornelis J.", "Potgieter", email = "c.potgieter@tcu.edu", role = "aut"),
@@ -19,7 +19,7 @@ RoxygenNote: 7.2.0
 Imports: 
     tibble,rootSolve,tidyverse,tidyr,magrittr,doParallel,foreach,futile.logger,
     greekLetters,mvtnorm,MultiGHQuad,psych,
-    nleqslv,tryCatchLog,rstan,runjags,dplyr,parallel
+    nleqslv,tryCatchLog,rstan,runjags,dplyr,parallel,runjags,rstan
 Suggests: 
     testthat (>= 3.5.0)
 Config/testthat/edition: 3

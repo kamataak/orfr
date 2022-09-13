@@ -40,7 +40,7 @@ wcpm(
 
 \item{cases}{- student id vectors, will directly use passage data if no calib.data provided}
 
-\item{est}{- estimator keyword / c("mle", "map", "eap")}
+\item{est}{- estimator keyword / c("mle", "map", "eap", "mcmc"), default is mcmc}
 
 \item{se}{- standard error keyword / c("analytic", "bootstrap"), default is analytic}
 
