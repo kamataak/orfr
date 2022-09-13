@@ -28,7 +28,7 @@
 #' @export
 summary.mcem <- function(object, digits=4,...) {
   z <- object
-  tab <- cbind(z$pass.param$passage.id,
+  tab <- cbind(as.double(z$pass.param$passage.id), # change to double to clearly print the columns
                as.vector(z$pass.param$a),
                as.vector(z$pass.param$b),
                z$pass.param$alpha,
@@ -131,7 +131,8 @@ summary.wcpm <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
 #' @param verbose show summary on screen, default TRUE
 #' @param factor.scores - theta and tau output flag, default is FALSE
 #'
-#' @return bootstrap data set
+#' @return table
+#' @method summary bootstrap
 #' @export
 summary.bootstrap <- function(object, digits=4, geterror=FALSE,verbose=TRUE,factor.scores=FALSE) {
   z <- object
