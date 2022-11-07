@@ -1,6 +1,6 @@
 Package: bspam
 Type: Package
-Title: The Model-based Approach to ORF Assessment Data 
+Title: Speed-Accuracy Psychometric Modeling for Count Outcome Data 
 Version: 1.2.0
 Author: c(
     person("Akihito", "Kamata", email = "", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-9570-1464")),
@@ -18,8 +18,8 @@ LazyData: true
 RoxygenNote: 7.2.0
 Imports: 
     tibble,rootSolve,tidyverse,tidyr,magrittr,doParallel,foreach,futile.logger,
-    greekLetters,mvtnorm,MultiGHQuad,psych,
-    nleqslv,tryCatchLog,rstan,runjags,dplyr,parallel,runjags,rstan
+    greekLetters,mvtnorm,
+    nleqslv,tryCatchLog,dplyr,parallel
 Suggests: 
     testthat (>= 3.5.0)
 Config/testthat/edition: 3
