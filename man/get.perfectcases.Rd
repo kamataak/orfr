@@ -7,7 +7,7 @@
 get.perfectcases(data)
 }
 \arguments{
-\item{data}{= student response data}
+\item{data}{= person response data}
 }
 \value{
 perfect accurate case vector

@@ -18,11 +18,11 @@
 #'
 #'
 #' @param data - reading data object comes from prep function
-#' @param stu.data - student reading data
-#' @param studentid The column name in the data that represents the unique student identifier.
-#' @param passageid The column name in the data that represents the unique passage identifier.
-#' @param numwords.p The column name in the data that represents the number of words in a passage.
-#' @param wrc The column name in the data that represents the words read correctly for each case.
+#' @param person.data - individual reading data
+#' @param person.id The column name in the data that represents the unique personal identifier.
+#' @param task.id The column name in the data that represents the unique passage identifier.
+#' @param max.counts The column name in the data that represents the number of words in a passage.
+#' @param obs.counts The column name in the data that represents the words read correctly for each case.
 #' @param time The column name in the data that represents the time, in seconds, for each case.
 #' @param k.in    - number of imputations, default is 5
 #' @param reps.in - number of Monte-Carlo iterations, default is 2
@@ -33,14 +33,14 @@
 #'
 #' @return MCEM list, MCMC list
 #' @export
-mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",wrc="",time="", k.in=5,reps.in=2,ests.in=NA,
-                 est="mcem",se="none",verbose=FALSE) {
+fit.model <- function(data=NA, person.data=NA, person.id="",task.id="",max.counts="",obs.counts="",time="", k.in=5,reps.in=2,ests.in=NA,
+                      est="mcem",se="none",verbose=FALSE) {
   # loading logger
   log.initiating()
 
-  if (studentid != "") {
+  if (person.id != "") {
     #create wide data
-    data <- prepwide(stu.data,studentid,passageid,numwords.p,wrc,time)
+    data <- prepwide(person.data,person.id,task.id,max.counts,obs.counts,time)
   }
 
   if (est == "mcem") {
@@ -48,16 +48,16 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
 
       MCEMests <- run.mcem(data$Y,data$logT10,data$N,data$I,k.in,reps.in,ests.in,verbose=verbose)
 
-      pass.param <-  tibble(
+      task.param <-  tibble(
         a = MCEMests$a,
         b = MCEMests$b,
         alpha = MCEMests$alpha,
         beta = MCEMests$beta,
         passage.id = as.numeric(colnames(data$Y)),
-        numwords.p = data$N)
+        max.counts = data$N)
       hyper.param <- tibble(vartau = MCEMests$vartau,
                             rho = MCEMests$rho)
-      MCEM.ests <- list(pass.param = pass.param,
+      MCEM.ests <- list(task.param = task.param,
                         hyper.param = hyper.param)
     } else {
       # test
@@ -83,7 +83,7 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
       }
       SE.analytic <- sqrt(diag(CV.analytic))
 
-      pass.param <-  tibble(
+      task.param <-  tibble(
         a = MCEMests$a,
         b = MCEMests$b,
         alpha = MCEMests$alpha,
@@ -92,33 +92,33 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
         se_b = SE.analytic[(length(MCEMests$a)+1):(length(MCEMests$a)+length(MCEMests$b))],
         se_alpha = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+1):(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha))],
         se_beta = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+1):(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta))],
-        passage.id = as.numeric(colnames(data$Y)),
-        numwords.p = data$N)
+        task.id = as.numeric(colnames(data$Y)),
+        max.counts = data$N)
       hyper.param <- tibble(vartau = MCEMests$vartau,
                             rho = MCEMests$rho,
                             se_vartau = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta)+1)],
                             se_rho = SE.analytic[(length(MCEMests$a)+length(MCEMests$b)+length(MCEMests$alpha)+length(MCEMests$beta)+2)])
-      MCEM.ests <- list(pass.param = pass.param,
+      MCEM.ests <- list(task.param = task.param,
                         hyper.param = hyper.param)
     }
 
 
     # check if shows the summary
     if (verbose == TRUE) {
-      summary.mcem(MCEM.ests)
+      summary.fit.model(MCEM.ests)
     }
-    class(MCEM.ests) <- "mcem" # define class
+    class(MCEM.ests) <- "fit.model" # define class
     flog.info("End mcem process", name = "orfrlog")
     return(invisible(MCEM.ests))
 
 
   } else { # for MCMC, mcem parameters are necessary
-    flog.info("Begin mcem process with mcmc setting", name = "orfrlog")
-    MCEM.ests <- bayes(stu.data,
-                       studentid,
-                       passageid,
-                       numwords.p,
-                       wrc,
+    flog.info("Begin mcmc process", name = "orfrlog")
+    MCMC.ests <- bayes(person.data,
+                       person.id,
+                       task.id,
+                       max.counts,
+                       obs.counts,
                        time,
                        parallel=T, #logical, run in parallel? "T" or "F"
                        n.chains=NA, # pos. int., number of the chains
@@ -128,12 +128,12 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
     )
     # check if shows the summary
     if (verbose == TRUE) {
-      summary.mcem(MCEM.ests)
+      summary.fit.model(MCMC.ests)
     }
 
-    class(MCEM.ests) <- "mcem" # define class
-    flog.info("End mcem process", name = "orfrlog")
-    return(invisible(MCEM.ests))
+    class(MCMC.ests) <- "fit.model" # define class
+    flog.info("End mcmc process", name = "orfrlog")
+    return(invisible(MCMC.ests))
   }
 }
 
@@ -155,25 +155,27 @@ mcem <- function(data=NA, stu.data=NA, studentid="",passageid="",numwords.p="",w
 #' A copy of the GNU General Public License is available at
 #' http://www.gnu.org/licenses/
 #'
-#' @param calib.data - mcem class object
-#' @param stu.data - student reading data
-#' @param studentid The column name in the data that represents the unique student identifier.
-#' @param passageid The column name in the data that represents the unique passage identifier.
-#' @param numwords.p The column name in the data that represents the number of words in a passage.
-#' @param wrc The column name in the data that represents the words read correctly for each case.
+#' @param calib.data - fit.model class object
+#' @param person.data - individual reading data
+#' @param person.id The column name in the data that represents the unique individual identifier.
+#' @param task.id The column name in the data that represents the unique task identifier.
+#' @param max.counts The column name in the data that represents the number of words in a task.
+#' @param occasion The column name in the data that represents the unique occasion.
+#' @param group The column name in the data that represents the unique group.
+#' @param obs.counts The column name in the data that represents the words read correctly for each case.
 #' @param time The column name in the data that represents the time, in seconds, for each case.
-#' @param cases - student id vectors, will directly use passage data if no calib.data provided
+#' @param cases - individual id vectors, will directly use task data if no calib.data provided
 #' @param est - estimator keyword / c("mle", "map", "eap", "mcmc"), default is mcmc
 #' @param se - standard error keyword / c("analytic", "bootstrap"), default is analytic
-#' @param wo - wcpm option / c("internal", "external"), default is internal
 #' @param failsafe - retry time for bootstrap / default 0, can set to 5 ~ 50
 #' @param bootstrp - set K number of bootstrap / default 100
 #' @param external - if not NULL, will use not student read passages for estimating
+#' @param type - output type, "general" and "orf", default "general" only output tau & theta. "orf" will output wcpm
 #'
-#' @return WCPM list or Bootstrap dataset
+#' @return scoring list or Bootstrap dataset
 #' @export
-wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season="",grade="",numwords.p="",wrc="",time="", cases=NULL,
-                 est="map", se="analytic", wo="internal", failsafe=0, bootstrap=100, external=NULL) {
+scoring <- function(calib.data=NA, person.data=NA, person.id="",task.id="",occasion="",group="",max.counts="",obs.counts="",time="", cases=NULL,
+                    est="map", se="analytic",failsafe=0, bootstrap=100, external=NULL, type="general") {
   # loading logger
   log.initiating()
 
@@ -181,30 +183,30 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
   error_case <- tibble()
   if (se == "analytic") {
     if (est != "mcmc") { #not mcmc
-      if (studentid != "") {
-        stu.data <- preplong(stu.data,studentid,passageid,season,grade,numwords.p,wrc,time)
+      if (person.id != "") {
+        person.data <- preplong(person.data,person.id,task.id,occasion,group,max.counts,obs.counts,time)
       }
       # Check MCEM object
-      if (class(calib.data)[1] == "mcem") {
+      if (class(calib.data)[1] == "fit.model") {
         #      MCEM <- calib.data
-        # assign pass.data
-        pass.data <- calib.data$pass.param
+        # assign task.data
+        task.data <- calib.data$task.param
       } else { # if no MCEM object stop running
-        flog.info("Missed MCEM object, end wcpm process", name = "orfrlog")
+        flog.info("Missed fit.model object, end scoring process", name = "orfrlog")
         return(NULL)
       }
 
       if (length(external) != 0) { # external,
-        print(paste("Use external passage:", paste(external, collapse = ",")))
+        print(paste("Use external task:", paste(external, collapse = ",")))
       }
 
       # Check cases
       if (length(cases) == 0) {
         print("Cases: ")
-        cases <- get.cases(stu.data)
+        cases <- get.cases(person.data)
       }
       # Check if there is a perfect accurate case
-      perfect.cases <<- get.perfectcases(stu.data)
+      perfect.cases <<- get.perfectcases(person.data)
 
       if (count(perfect.cases) != 0) {
         flog.info(paste("The perfect accurate case: ", paste(perfect.cases$perfect.cases, collapse = ", ")), name="orfrlog")
@@ -212,12 +214,12 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
         flog.info("There is no perfect accurate case.", name="orfrlog")
       }
 
-      result.list <- run.wcpm(calib.data, stu.data, pass.data, cases, perfect.cases, est, lo = -4, hi = 4, q = 100, kappa = 1, external=external)
+      result.list <- run.scoring(calib.data, person.data, task.data, cases, perfect.cases, est, lo = -4, hi = 4, q = 100, kappa = 1, external=external,type=type)
     } else  { # mcmc
-      if (studentid == "") { # if without columns' names
+      if (person.id == "") { # if without columns' names
         result.list <- bayes.wcpm(
           calib.data = calib.data,
-          stu.data = stu.data,
+          person.data = person.data,
           cases = cases,
           external=external,
           parallel=T, #logical, run in parallel? "T" or "F"
@@ -229,13 +231,13 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
       } else {
         result.list <- bayes.wcpm(
           calib.data = calib.data,
-          stu.data = stu.data,
-          studentid = studentid,
-          passageid = passageid,
-          season = season,
-          grade = grade,
-          numwords.p = numwords.p,
-          wrc = wrc,
+          person.data = person.data,
+          person.id = person.id,
+          task.id = task.id,
+          occasion = occasion,
+          group = group,
+          max.counts = max.counts,
+          obs.counts = obs.counts,
           time = time,
           cases = cases,
           external=external,
@@ -246,12 +248,12 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
           thin=1 #pos. int, thinning interval, a.k.a, period of saving samples
         )
       }
-      class(result.list) <- "wcpm"
+      class(result.list) <- "scoring"
       return(result.list)
     }
   } else if (se == "bootstrap"){ #for bootstrap
     # Check if there is a perfect accurate case
-    perfect.cases <<- get.perfectcases(stu.data)
+    perfect.cases <<- get.perfectcases(person.data)
 
     RE_TRY <- failsafe # Define retry, if 0, no retry
     j <- 0 # index for retry time
@@ -264,7 +266,7 @@ wcpm <- function(calib.data=NA, stu.data=NA, studentid="",passageid="",season=""
       flog.info(paste("Boostrap running for case:", cases$cases[i]), name = "orfrlog")
       t_case = data.frame(cases=cases$cases[i])
       tryCatchLog(
-        temp <- getBootstrapSE(calib.data, stu.data, case=t_case, perfect.cases, est, kappa=1,bootstrap=bootstrap),
+        temp <- getBootstrapSE(calib.data, person.data, case=t_case, perfect.cases, est, kappa=1,bootstrap=bootstrap),
         error=function(e) {
           flog.info(paste("Running error:", e), name = "orfrlog")
         }

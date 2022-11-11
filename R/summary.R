@@ -24,16 +24,16 @@
 #' @import tidyverse
 #' @return printing information
 #'
-#' @method summary mcem
+#' @method summary fit.model
 #' @export
-summary.mcem <- function(object, digits=4,...) {
+summary.fit.model <- function(object, digits=4,...) {
   z <- object
-  tab <- cbind(as.double(z$pass.param$passage.id), # change to double to clearly print the columns
-               as.vector(z$pass.param$a),
-               as.vector(z$pass.param$b),
-               z$pass.param$alpha,
-               z$pass.param$beta)
-  colnames(tab)=c("passage.id","a","      b","   alpha","   beta")
+  tab <- cbind(as.double(z$task.param$task.id), # change to double to clearly print the columns
+               as.vector(z$task.param$a),
+               as.vector(z$task.param$b),
+               z$task.param$alpha,
+               z$task.param$beta)
+  colnames(tab)=c("task.id","a","      b","   alpha","   beta")
   rownames(tab)=paste0(c(rep(1:length(tab[,1]))),".")
   #  print(tab[, 1:3]) # only print a part of columns
   #  print(tab)
@@ -67,10 +67,10 @@ summary.mcem <- function(object, digits=4,...) {
 #' @param verbose - boolean, if TRUE, shows the summary, default is TRUE
 #' @param factor.scores - theta and tau output flag, default is FALSE
 #'
-#' @return wcpm dataset with passage information and estimated score
-#' @method summary wcpm
+#' @return scoring dataset with task information and estimated score
+#' @method summary scoring
 #' @export
-summary.wcpm <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
+summary.scoring <- function(object, digits=4,verbose=TRUE,factor.scores=FALSE) {
   z <- object
 
   tb <- as.data.frame(t(do.call(rbind, z)))

@@ -2,14 +2,14 @@
 ################### THIS IS THE FUNCTION TO ESTIMATE MODEL-BASED WCPM PARAMETERS #################
 ##################################################################################################
 #' Bayes function when running mcem with mcmc setting
-#' @param calib.data - mcem class object
-#' @param stu.data - student reading data
-#' @param studentid The column name in the data that represents the unique student identifier.
-#' @param passageid The column name in the data that represents the unique passage identifier.
-#' @param numwords.p The column name in the data that represents the number of words in a passage.
-#' @param season The column name in the data that represents the period of data collection.
-#' @param grade The column name in the data that represents the grade of student.
-#' @param wrc The column name in the data that represents the words read correctly for each case.
+#' @param calib.data - fit.model class object
+#' @param person.data - individual reading data
+#' @param person.id The column name in the data that represents the unique individual identifier.
+#' @param task.id The column name in the data that represents the unique task identifier.
+#' @param max.counts The column name in the data that represents the number of words in a task.
+#' @param occasion The column name in the data that represents the unique occasion.
+#' @param group The column name in the data that represents the unique group.
+#' @param obs.counts The column name in the data that represents the words read correctly for each case.
 #' @param time The column name in the data that represents the time, in seconds, for each case.
 #' @param cases - student id vectors, will directly use passage data if no calib.data provided
 #' @param external - if not NULL, will use not student read passages for estimating
@@ -23,13 +23,13 @@
 #' @return list
 bayes.wcpm <- function(
     calib.data=NA,
-    stu.data=NA,
-    studentid=NULL,
-    passageid = NULL,
-    season = NULL,
-    grade = NULL,
-    numwords.p = NULL,
-    wrc = NULL,
+    person.data=NA,
+    person.id=NULL,
+    task.id = NULL,
+    occasion = NULL,
+    group = NULL,
+    max.counts = NULL,
+    obs.counts = NULL,
     time = NULL,
     cases = NULL,
     external=NULL,
@@ -46,80 +46,80 @@ bayes.wcpm <- function(
   flog.info("Begin wcpm process with mcmc setting", name = "orfrlog")
 
   #First, check if calib.data exists. If not, print a warning.
-  if(class(calib.data)[1] == "mcem"){
-    pass.data <- calib.data$pass.param
+  if(class(calib.data)[1] == "fit.model"){
+    pass.data <- calib.data$task.param
   }else{
-    flog.info("Missing MCEM object, end wcpm process", name = "orfrlog")
+    flog.info("Missing fit.model object, end wcpm process", name = "orfrlog")
     return(NULL)
   }
 
   #Now, check whether user entered the column names of the data or
-  #just used the output of prep data. For former, rename columns of stu.data
-  if(is.null(c(studentid, passageid, season, grade, numwords.p, wrc, time))){
-    stu.data <- stu.data %>%
+  #just used the output of prep data. For former, rename columns of person.data
+  if(is.null(c(person.id, task.id, occasion, group, max.counts, obs.counts, time))){
+    person.data <- person.data %>%
       select(-lgsec)
-    colnames(stu.data) <- c("studentid", "passageid", "numwords.p", "season", "grade", "wrc", "time")
+    colnames(person.data) <- c("person.id", "task.id", "max.counts", "occasion", "group", "obs.counts", "time")
   }else{
-    stu.data <- stu.data[,c(studentid, passageid, season, grade, numwords.p, wrc, time)]
-    colnames(stu.data) <- c("studentid", "passageid", "season", "grade", "numwords.p", "wrc", "time")
+    person.data <- person.data[,c(person.id, task.id, occasion, group, max.counts, obs.counts, time)]
+    colnames(person.data) <- c("person.id", "task.id", "occasion", "group", "max.counts", "obs.counts", "time")
   }
 
   #Now, check whether users supplied cases or not. If they didn't, then WCPMs will be
   #estimated for all unique cases appear in the supplied student data!
   if(is.null(cases)){
-    stu.data <- stu.data
-    #%>% arrange(studentid, season, grade)
+    person.data <- person.data
+    #%>% arrange(person.id, occasion, group)
   }else{
-    stu.data <- stu.data %>%
-      #arrange(studentid, season, grade) %>%
-      mutate(case_sel=paste(studentid, season, sep = "_")) %>%
+    person.data <- person.data %>%
+      #arrange(person.id, occasion, group) %>%
+      mutate(case_sel=paste(person.id, occasion, sep = "_")) %>%
       filter(case_sel %in% cases$cases) %>%
       select(-case_sel)
   }
 
 
   #Identify parameters of the passages read from the calibrated pool
-  stu_id <- stu.data %>%
-    select(studentid) %>%
+  stu_id <- person.data %>%
+    select(person.id) %>%
     distinct()
 
-  pas_param_read <- calib.data$pass.param %>%
-    filter(passage.id %in% stu.data$passageid) %>%
-    arrange(passage.id)
+  pas_param_read <- calib.data$task.param %>%
+    filter(task.id %in% person.data$task.id) %>%
+    arrange(task.id)
 
   #Create descriptive part of the output
-  desc_out <- stu.data %>%
-    rename(occasion=season) %>%
-    group_by(studentid, occasion, grade) %>%
-    summarise(n.pass=n_distinct(passageid),
-              numwords.total=sum(numwords.p),
-              wrc.obs=sum(wrc),
+  desc_out <- person.data %>%
+    rename(occasion=occasion) %>%
+    group_by(person.id, occasion, group) %>%
+    summarise(task.n=n_distinct(task.id),
+              max.counts.total=sum(max.counts),
+              obs.counts.obs=sum(obs.counts),
               secs.obs=sum(time)) %>%
     ungroup() %>%
-    mutate(wcpm.obs=wrc.obs/secs.obs*60)
+    mutate(wcpm.obs=obs.counts.obs/secs.obs*60)
 
   desc_out <- stu_id %>%
     left_join(desc_out) %>%
-    select(studentid, everything())
+    select(person.id, everything())
 
   #Now, create the datasets for MCMC based on selected cases and passages
-  time.data <- stu.data %>%
-    select(studentid, passageid, time) %>%
-    pivot_wider(names_from = passageid, values_from = time) %>%
-    column_to_rownames("studentid") %>%
+  time.data <- person.data %>%
+    select(person.id, task.id, time) %>%
+    pivot_wider(names_from = task.id, values_from = time) %>%
+    column_to_rownames("person.id") %>%
     select(sort(colnames(.))) %>%
     as.matrix()
 
-  count.data <- stu.data %>%
-    select(studentid, passageid, wrc) %>%
-    pivot_wider(names_from = passageid, values_from = wrc) %>%
-    column_to_rownames("studentid") %>%
+  count.data <- person.data %>%
+    select(person.id, task.id, obs.counts) %>%
+    pivot_wider(names_from = task.id, values_from = obs.counts) %>%
+    column_to_rownames("person.id") %>%
     select(sort(colnames(.))) %>%
     as.matrix()
 
-  n.words <- stu.data %>%
-    select(passageid, numwords.p) %>%
-    arrange(passageid) %>%
+  n.words <- person.data %>%
+    select(task.id, max.counts) %>%
+    arrange(task.id) %>%
     distinct() %>%
     deframe()
 
@@ -133,19 +133,19 @@ bayes.wcpm <- function(
     pas_param_est <- pas_param_read
 
     desc_out <- desc_out %>%
-      mutate(n.pass.wcpm=n.pass,
-             numwords.total.wcpm=numwords.total)
+      mutate(task.n.wcpm=task.n,
+             max.counts.total.wcpm=max.counts.total)
   }else{
-    pas_param_est <- calib.data$pass.param %>%
-      filter(passage.id %in% external) %>%
-      arrange(passage.id)
+    pas_param_est <- calib.data$task.param %>%
+      filter(task.id %in% external) %>%
+      arrange(task.id)
 
     pas_est_ind <- matrix(1, nrow = nrow(time.data),
                           ncol = length(external),
-                          dimnames = list(rownames(time.data), pas_param_est$passage.id))
+                          dimnames = list(rownames(time.data), pas_param_est$task.id))
     desc_out <- desc_out %>%
-      mutate(n.pass.wcpm=n_distinct(pas_param_est$passage.id),
-             numwords.total.wcpm=sum(pas_param_est$numwords.p))
+      mutate(task.n.wcpm=n_distinct(pas_param_est$task.id),
+             max.counts.total.wcpm=sum(pas_param_est$max.counts))
   }
 
 
@@ -243,14 +243,14 @@ bayes.wcpm <- function(
                       a_read=pas_param_read$a,
                       b_read=pas_param_read$b,
                       alpha_read=pas_param_read$alpha,
-                      beta_raw_read=pas_param_read$beta + log(pas_param_read$numwords.p/10),
+                      beta_raw_read=pas_param_read$beta + log(pas_param_read$max.counts/10),
 
                       pas_est_ind=pas_est_ind,
-                      nw_est=pas_param_est$numwords.p,
+                      nw_est=pas_param_est$max.counts,
                       a_est=pas_param_est$a,
                       b_est=pas_param_est$b,
                       alpha_est=pas_param_est$alpha,
-                      beta_raw_est=pas_param_est$beta + log(pas_param_est$numwords.p/10),
+                      beta_raw_est=pas_param_est$beta + log(pas_param_est$max.counts/10),
 
                       ptau=1/calib.data$hyper.param$vartau,
                       cvr=calib.data$hyper.param$rho*sqrt(calib.data$hyper.param$vartau))
@@ -333,14 +333,14 @@ gc()
                       a_read=pas_param_read$a,
                       b_read=pas_param_read$b,
                       alpha_read=pas_param_read$alpha,
-                      beta_raw_read=pas_param_read$beta + log(pas_param_read$numwords.p/10),
+                      beta_raw_read=pas_param_read$beta + log(pas_param_read$max.counts/10),
 
                       pas_est_ind=pas_est_ind,
-                      nw_est=pas_param_est$numwords.p,
+                      nw_est=pas_param_est$max.counts,
                       a_est=pas_param_est$a,
                       b_est=pas_param_est$b,
                       alpha_est=pas_param_est$alpha,
-                      beta_raw_est=pas_param_est$beta + log(pas_param_est$numwords.p/10),
+                      beta_raw_est=pas_param_est$beta + log(pas_param_est$max.counts/10),
 
                       stau=sqrt(calib.data$hyper.param$vartau),
                       cvr=calib.data$hyper.param$rho*sqrt(calib.data$hyper.param$vartau))
@@ -396,7 +396,7 @@ generated quantities{
 
   real tim_ex[K,J]; //Expeced time matrix
   real <lower=0> cnt_ex[K,J]; //Expected count matrix
-  vector <lower=0> [J] exp_cnt; //Model-based wrc
+  vector <lower=0> [J] exp_cnt; //Model-based obs.counts
   vector <lower=0> [J] exp_tim; //Model-based secs
   vector <lower=0> [J] wcpm; //Model-based WCPM
 
@@ -416,56 +416,57 @@ generated quantities{
 
 "
 
-  # ------------------------------------------------------------------- STAN Syntax
+# ------------------------------------------------------------------- STAN Syntax
 
-  #Specify the parallel running or not!
-  if(isTRUE(parallel)){
-    n.cores <- min(max(4), detectCores()-1)
-  } else{
-    n.cores <- 1
+#Specify the parallel running or not!
+if(isTRUE(parallel)){
+  n.cores <- min(max(4), detectCores()-1)
+} else{
+  n.cores <- 1
+}
+
+
+stan_out <- rstan::stan(model_code = stan.syntax,
+                        pars = param_est,
+                        data = data.list,
+                        chains = n.chains,
+                        warmup  = 1e3, #Keep as the default values for stan.
+                        iter = 5e3,
+                        thin = thin,
+                        cores = n.cores,
+                        init = inits,
+                        control = list(adapt_delta = 0.99)
+)
+
+par_est <- summary(stan_out)$summary %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "Parameter") %>%
+  filter(Parameter!="lp__") %>%
+  select(Mean=mean, SD=sd, Lower95=`2.5%`, Upper95=`97.5%`)
   }
 
+par_est <- par_est %>%
+  mutate(person.id=rep(desc_out$person.id, length(param_est)),
+         occasion=rep(desc_out$occasion, length(param_est)),
+         group=rep(desc_out$group, length(param_est)),
+         Parameter=rep(param_est, each=J))
 
-  stan_out <- rstan::stan(model_code = stan.syntax,
-                   pars = param_est,
-                   data = data.list,
-                   chains = n.chains,
-                   warmup  = 1e3, #Keep as the default values for stan.
-                   iter = 5e3,
-                   thin = thin,
-                   cores = n.cores,
-                   init = inits,
-                   control = list(adapt_delta = 0.99)
-  )
+par_est_wide <- par_est %>%
+  pivot_wider(names_from = c("Parameter"), values_from = c("Mean", "SD", "Lower95", "Upper95")) %>%
+  select(person.id, occasion, group,
+         obs.counts.est=Mean_exp_cnt,
+         secs.est=Mean_exp_tim,
+         wcpm.est=Mean_wcpm,
+         se.wcpm.est=SD_wcpm,
+         low.95.est.wcpm=Lower95_wcpm,
+         up.95.est.wcpm=Upper95_wcpm)
 
-  par_est <- summary(stan_out)$summary %>%
-    as.data.frame() %>%
-    rownames_to_column(var = "Parameter") %>%
-    filter(Parameter!="lp__") %>%
-    select(Mean=mean, SD=sd, Lower95=`2.5%`, Upper95=`97.5%`)
-  }
+final_out <- desc_out %>%
+  left_join(par_est_wide) %>%
+  select(student.id=person.id, occasion, group, task.n, max.counts.total, obs.counts.obs, secs.obs, wcpm.obs, obs.counts.est, secs.est, task.n.wcpm,
+         max.counts.total.wcpm, wcpm.est, se.wcpm.est, low.95.est.wcpm, up.95.est.wcpm)
 
-  par_est <- par_est %>%
-    mutate(studentid=rep(desc_out$studentid, length(param_est)),
-           occasion=rep(desc_out$occasion, length(param_est)),
-           grade=rep(desc_out$grade, length(param_est)),
-           Parameter=rep(param_est, each=J))
 
-  par_est_wide <- par_est %>%
-    pivot_wider(names_from = c("Parameter"), values_from = c("Mean", "SD", "Lower95", "Upper95")) %>%
-    select(studentid, occasion, grade,
-           wrc.est=Mean_exp_cnt,
-           secs.est=Mean_exp_tim,
-           wcpm.est=Mean_wcpm,
-           se.wcpm.est=SD_wcpm,
-           low.95.est.wcpm=Lower95_wcpm,
-           up.95.est.wcpm=Upper95_wcpm)
-
-  final_out <- desc_out %>%
-    left_join(par_est_wide) %>%
-    select(student.id=studentid, occasion, grade, n.pass, numwords.total, wrc.obs, secs.obs, wcpm.obs, wrc.est, secs.est, n.pass.wcpm,
-           numwords.total.wcpm, wcpm.est, se.wcpm.est, low.95.est.wcpm, up.95.est.wcpm)
-
-  colnames(final_out) <- gsub(pattern = "est", x = colnames(final_out), replacement =bayes.soft)
-  final_out
+colnames(final_out) <- gsub(pattern = "est", x = colnames(final_out), replacement =bayes.soft)
+final_out
 }

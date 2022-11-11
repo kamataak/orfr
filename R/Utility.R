@@ -16,7 +16,7 @@
 #' http://www.gnu.org/licenses/
 #'
 #'
-#' prep function prepares input data for mcem function
+#' prep function prepares input data for fit.model function
 #'
 #' @param data = student response data
 #'
@@ -28,50 +28,50 @@
 #'                    data.wide: list of Y, logT10, N, I)
 #'
 #' @export
-prep <- function(data=data,studentid="",passageid="",season="",grade="",numwords.p="",wrc="",time="") {
+prep <- function(data=data,person.id="",task.id="",occasion="",group="",max.counts="",obs.counts="",time="") {
   # loading logger
   log.initiating()
   flog.info("Begin preparing data process", name = "orfrlog")
   #  col.names = c(studentid,passageid,numwords.p,season,grade,wrc,time)
-  col.labels <- c("student.id","passage.id","numwords.p","occasion","grade","wrc","sec","lgsec")
+  col.labels <- c("person.id","task.id","max.counts","occasion","group","obs.counts","time","lgsec")
 
   dat <- data
   tryCatch (
     expr = {
       # create_data
-      c1 <- dat[studentid] # student.id
-      c2 <- dat[passageid] # passage.id
-      c3 <- dat[numwords.p] # numwords.p
-      c4 <- dat[season] # occasion
-      c5 <- dat[grade] # grade
-      c6 <- dat[wrc] # wrc
-      c7 <- dat[time] # sec
+      c1 <- dat[person.id] # person.id
+      c2 <- dat[task.id] # task.id
+      c3 <- dat[max.counts] # max.counts
+      c4 <- dat[occasion] # occasion
+      c5 <- dat[group] # group
+      c6 <- dat[obs.counts] # obs.counts
+      c7 <- dat[time] # time
       lgsec <- log(c7) # lgsec
 
       dat <- data.frame(c1,c2,c3,c4,c5,c6,c7,lgsec)
       colnames(dat) <- col.labels
 
-      tp <- as.data.frame(dat %>% select(student.id, passage.id, wrc) %>%
-                            pivot_wider(names_from = passage.id, values_from = wrc))
+      tp <- as.data.frame(dat %>% select(person.id, task.id, obs.counts) %>%
+                            pivot_wider(names_from = task.id, values_from = obs.counts))
 
-      rownames(tp) <- as.character(tp$student.id)
-      Y <- tp %>% select(-student.id)
+      rownames(tp) <- as.character(tp$person.id)
+      Y <- tp %>% select(-person.id)
       Y <- Y[ , order(names(Y))] # sort by passage.id
       Y <- as.matrix(Y)
       for (i in 1:ncol(Y)) {
         Y[,i]<-ifelse(is.na(Y[,i]),NA,Y[,i]) #NaN
       }
       logT <-  as.data.frame(dat %>%
-                               mutate(lgsec=log(sec)) %>%
-                               select(student.id, passage.id, lgsec) %>%
-                               pivot_wider(names_from = passage.id, values_from = lgsec) %>%
-                               select(-student.id))
-      rownames(logT) <- as.character(tp$student.id)
-      logT <- logT[ , order(names(logT))] # sort by passage.id
+                               mutate(lgsec=log(time)) %>%
+                               select(person.id, task.id, lgsec) %>%
+                               pivot_wider(names_from = task.id, values_from = lgsec) %>%
+                               select(-person.id))
+      rownames(logT) <- as.character(tp$person.id)
+      logT <- logT[ , order(names(logT))] # sort by person.id
       N <- as.data.frame(dat %>%
-                           group_by(passage.id) %>% arrange(passage.id) %>% # sort by passage.id
-                           summarise(numwords.pass=max(numwords.p)) %>%
-                           select(-passage.id))
+                           group_by(task.id) %>% arrange(task.id) %>% # sort by person.id
+                           summarise(max.counts=max(max.counts)) %>% # numwords.pass
+                           select(-task.id))
       rownames(N) <- colnames(Y)
       N <- pull(N)
       I <- length(N)
@@ -98,50 +98,63 @@ prep <- function(data=data,studentid="",passageid="",season="",grade="",numwords
     }
   )
 }
-#' Returns cases (student and occasion) applied in [wcpm] function.
+#' Returns cases (person and occasion) applied in [fit.model] function.
 #'
-#' @param data = student response data
+#' @param data = person response data
 #'
 #' @return cases vector
 #'
 #' @export
 get.cases <- function(data) {
-  cases <- data %>% select(student.id,occasion) %>% unique() %>%
-    unite("cases", student.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
+  cases <- data %>% select(person.id,occasion) %>% unique() %>%
+    unite("cases", person.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
     select(cases)
   print(cases)
   return(invisible(cases))
 }
 #' Returns perfect cases (student and occasion) in which every word was read correctly.
 #'
-#' @param data  = student response data
+#' @param data  = person response data
 #'
 #' @return perfect accurate case vector
 #' @export
 #'
 get.perfectcases <- function(data) {
-  perfect.cases <- data %>% group_by(student.id,occasion) %>%
-    summarise(wrc_sum=sum(wrc),
-              numwords.p_sum=sum(numwords.p), .groups = "drop_last") %>%
-    filter(wrc_sum == numwords.p_sum) %>%
-    unite("perfect.cases", student.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
+  perfect.cases <- data %>% group_by(person.id,occasion) %>%
+    summarise(obs.counts.sum=sum(obs.counts),
+              max.counts.sum=sum(max.counts), .groups = "drop_last") %>%
+    filter(obs.counts.sum == max.counts.sum) %>%
+    unite("perfect.cases", person.id:occasion, sep = "_", remove = TRUE, na.rm = FALSE) %>%
     select(perfect.cases)
   return(invisible(perfect.cases))
 }
 
 #' Prepares data in a long format for [wcpm]
 #'
-#' @param data = student response data
+#' @param data = person response data
 #'
 #' @return data frame
 #'
-preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
-  vars <- c(studentid,passageid,season,grade,numwords.p,wrc,time)
+preplong <- function(data,
+                     person.id,
+                     task.id,
+                     occasion,
+                     group,
+                     max.counts,
+                     obs.counts,
+                     time){
+  vars <- c(person.id,
+            task.id,
+            occasion,
+            group,
+            max.counts,
+            obs.counts,
+            time)
   dat <- data %>%
     select(all_of(vars)) %>%
-    rename(student.id=1,passage.id=2,
-           occasion=3,grade=4,
-           numwords.p=5,wrc=6,sec=7) %>%
+    rename(person.id=1,task.id=2,
+           occasion=3,group=4,
+           max.counts=5,obs.counts=6,time=7) %>%
     mutate(lgsec=log(.[[7]]))
   #lgsec10 = log(.[[7]] - log(.[[5]]) + log(10)
   #           stu_season_id2=paste(.[[1]],.[[3]],sep="_"))
@@ -162,18 +175,18 @@ preplong <- function(data,studentid,passageid,season,grade,numwords.p,wrc,time){
 #' @param wrc The column name in the data that represents the words read correctly for each case.
 #' @param time The column name in the data that represents the time, in seconds, for each case.
 #'
-#' @examples
-#' data("passage")
 #'
-#' prepwide(passage,
-#'  studentid = "id.student",
-#'  passageid = "id.passage",
-#'  numwords.p = "numwords.pass",
-#'  wrc = "wrc",
-#'  time = "sec")
-#'
-prepwide <- function(data, studentid, passageid, numwords.p, wrc, time){
-  vars <- c(studentid,passageid,numwords.p,wrc,time)
+prepwide <- function(data,
+                     person.id,
+                     task.id,
+                     max.counts,
+                     obs.counts,
+                     time){
+  vars <- c(person.id,
+            task.id,
+            max.counts,
+            obs.counts,
+            time)
   dat <- data %>%
     select(all_of(vars))
   Y <- dat %>%
@@ -226,7 +239,7 @@ get_errlist <- function(passage) {
   err_list <- c()
   for (i in 1:length(passage_ids)) {
     flag <- 0
-    print(passage_ids[i])
+    #print(passage_ids[i])
     set_a <- passage %>% filter(id.passage==passage_ids[i]) %>% select(id.student)
     for (j in 1:length(passage_ids)) {
       if (j != i) {

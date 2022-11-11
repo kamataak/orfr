@@ -3,11 +3,11 @@
 ##################################################################################################
 #' Bayes function when running mcem with mcmc setting
 #'
-#' @param stu.data - student reading data
-#' @param studentid The column name in the data that represents the unique student identifier.
-#' @param passageid The column name in the data that represents the unique passage identifier.
-#' @param numwords.p The column name in the data that represents the number of words in a passage.
-#' @param wrc The column name in the data that represents the words read correctly for each case.
+#' @param person.data - student reading data
+#' @param person.id The column name in the data that represents the unique individual identifier.
+#' @param task.id The column name in the data that represents the unique task identifier.
+#' @param max.counts The column name in the data that represents the number of words in a task.
+#' @param obs.counts The column name in the data that represents the words read correctly for each case.
 #' @param time The column name in the data that represents the time, in seconds, for each case.
 #' @param parallel parallel=T, #logical, run in parallel? "T" or "F"
 #' @param n.chains int., number of the chains
@@ -18,11 +18,11 @@
 #'
 #' @return list
 bayes <- function(
-    stu.data=NA,   # data frame, long format, required columns: studentid, passageid, numwords.p, wrc, time
-    studentid = "",
-    passageid = "",
-    numwords.p = "",
-    wrc = "",
+    person.data=NA,   # data frame, long format, required columns: person.id, task.id, max.counts, obs.counts, time
+    person.id = "",
+    task.id = "",
+    max.counts = "",
+    obs.counts = "",
     time = "",
     parallel=T, #logical, run in parallel? "T" or "F"
     n.chains=NA, # pos. int., number of the chains
@@ -32,27 +32,27 @@ bayes <- function(
 )
 {
 
-  stu.data <- stu.data[,c(studentid, passageid, numwords.p, wrc, time)]
-  colnames(stu.data) <- c("studentid", "passageid", "numwords.p", "wrc", "time")
+  person.data <- person.data[,c(person.id, task.id, max.counts, obs.counts, time)]
+  colnames(person.data) <- c("person.id", "task.id", "max.counts", "obs.counts", "time")
 
   #Extract the sub-components of the data for analyses
-  time.data <- stu.data %>%
-    select(studentid, passageid, time) %>%
-    pivot_wider(names_from = passageid, values_from = time) %>%
-    column_to_rownames("studentid") %>%
+  time.data <- person.data %>%
+    select(person.id, task.id, time) %>%
+    pivot_wider(names_from = task.id, values_from = time) %>%
+    column_to_rownames("person.id") %>%
     select(sort(colnames(.))) %>%
     as.matrix()
 
-  count.data <- stu.data %>%
-    select(studentid, passageid, wrc) %>%
-    pivot_wider(names_from = passageid, values_from = wrc) %>%
-    column_to_rownames("studentid") %>%
+  count.data <- person.data %>%
+    select(person.id, task.id, obs.counts) %>%
+    pivot_wider(names_from = task.id, values_from = obs.counts) %>%
+    column_to_rownames("person.id") %>%
     select(sort(colnames(.))) %>%
     as.matrix()
 
-  n.words <- stu.data %>%
-    select(passageid, numwords.p) %>%
-    arrange(passageid) %>%
+  n.words <- person.data %>%
+    select(task.id, max.counts) %>%
+    arrange(task.id) %>%
     distinct() %>%
     deframe()
 
@@ -273,15 +273,15 @@ if(isTRUE(parallel)){
 }
 
 stan_out <- rstan::stan(model_code = stan.syntax,
-                 pars = param_est,
-                 data = data.list,
-                 chains = n.chains,
-                 warmup  = 2e3, #for now, keep those values as default for stan
-                 iter = 1e4,
-                 thin = thin,
-                 cores = n.cores,
-                 init = inits,
-                 control = list(adapt_delta = 0.99)
+                        pars = param_est,
+                        data = data.list,
+                        chains = n.chains,
+                        warmup  = 2e3, #for now, keep those values as default for stan
+                        iter = 1e4,
+                        thin = thin,
+                        cores = n.cores,
+                        init = inits,
+                        control = list(adapt_delta = 0.99)
 )
 
 par_est <- summary(stan_out)$summary %>%
@@ -295,7 +295,7 @@ par_est <- summary(stan_out)$summary %>%
 
 #Create an output as the same structure as mcem function
 par_est_list <- list(
-  pass.param=tibble(
+  task.param=tibble(
     a=par_est$Mean[grep(pattern = "^a\\[", x = par_est$Parameter)],
     b=par_est$Mean[grep(pattern = "^b\\[", x = par_est$Parameter)],
     alpha=par_est$Mean[grep(pattern = "^alpha\\[", x = par_est$Parameter)],
@@ -304,8 +304,8 @@ par_est_list <- list(
     se.b=par_est$SD[grep(pattern = "^b\\[", x = par_est$Parameter)],
     se.alpha=par_est$SD[grep(pattern = "^alpha\\[", x = par_est$Parameter)],
     se.beta=par_est$SD[grep(pattern = "^beta\\[", x = par_est$Parameter)],
-    passage.id=names(n.words),
-    numwords.p=n.words),
+    task.id=names(n.words),
+    max.counts=n.words),
 
   hyper.param=tibble(
     vartau=par_est$Mean[grep(pattern = "vartau", x = par_est$Parameter)],

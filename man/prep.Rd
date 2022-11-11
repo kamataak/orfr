@@ -6,12 +6,12 @@
 \usage{
 prep(
   data = data,
-  studentid = "",
-  passageid = "",
-  season = "",
-  grade = "",
-  numwords.p = "",
-  wrc = "",
+  person.id = "",
+  task.id = "",
+  occasion = "",
+  group = "",
+  max.counts = "",
+  obs.counts = "",
   time = ""
 )
 }
@@ -38,5 +38,5 @@ A copy of the GNU General Public License is available at
 http://www.gnu.org/licenses/
 
 
-prep function prepares input data for mcem function
+prep function prepares input data for fit.model function
 }

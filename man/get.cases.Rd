@@ -2,16 +2,16 @@
 % Please edit documentation in R/Utility.R
 \name{get.cases}
 \alias{get.cases}
-\title{Returns cases (student and occasion) applied in [wcpm] function.}
+\title{Returns cases (person and occasion) applied in [fit.model] function.}
 \usage{
 get.cases(data)
 }
 \arguments{
-\item{data}{= student response data}
+\item{data}{= person response data}
 }
 \value{
 cases vector
 }
 \description{
-Returns cases (student and occasion) applied in [wcpm] function.
+Returns cases (person and occasion) applied in [fit.model] function.
 }

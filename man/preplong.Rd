@@ -4,10 +4,19 @@
 \alias{preplong}
 \title{Prepares data in a long format for [wcpm]}
 \usage{
-preplong(data, studentid, passageid, season, grade, numwords.p, wrc, time)
+preplong(
+  data,
+  person.id,
+  task.id,
+  occasion,
+  group,
+  max.counts,
+  obs.counts,
+  time
+)
 }
 \arguments{
-\item{data}{= student response data}
+\item{data}{= person response data}
 }
 \value{
 data frame

@@ -250,7 +250,7 @@ run.mcem <- function(Y,logT10,N,I,k.in=5,reps.in=2,ests.in=NA,verbose=FALSE) {
     b = mean_b,
     alpha = mean_alpha,
     beta = mean_beta,
-    numwords.p = N,
+    max.counts = N,
     vartau = vartau.store[JJ,],
     rho = rho.store[JJ,]
   )
@@ -528,10 +528,10 @@ bootmodel.cov <- function(Y,logT10,N,I,parms,k.in,reps.in,B) {
 #' 07/13/2021 Added Map function for bootstrap.
 #' 07/30/2021 Modified wcpm function based on Sarunya's update
 #'
-#' @param object = MCEM object, if not be given will occur error and stop running
-#' @param stu.data = student response passage data
-#' @param pass.data = estimate parameters data
-#' @param cases = student season id vector
+#' @param object = fit.model object, if not be given will occur error and stop running
+#' @param person.data = individual response task data
+#' @param task.data = estimate parameters data
+#' @param cases = individual occasion id vector
 #' @param est = estimator, c("mle", "map", "eap", "mcmc"), default "map"
 #' @param perfect.cases = perfect accurate case
 #' @param lo = default -4
@@ -539,6 +539,7 @@ bootmodel.cov <- function(Y,logT10,N,I,parms,k.in,reps.in,B) {
 #' @param q  = default 100
 #' @param kappa  = default 1
 #' @param external = if not NULL, will use not student read passages for estimating
+#' @param type - output type, "general" and "orf", default "general" only output tau & theta. "orf" will output wcpm
 #'
 #' @import rootSolve
 #' @import doParallel
@@ -549,85 +550,85 @@ bootmodel.cov <- function(Y,logT10,N,I,parms,k.in,reps.in,B) {
 #' @import MultiGHQuad
 #'
 #' @return wcpm list
-run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map", lo = -4, hi = 4, q = 100, kappa = 1, external=NULL) {
+run.scoring <- function(object, person.data, task.data, cases, perfect.cases, est="map", lo = -4, hi = 4, q = 100, kappa = 1, external=NULL, type=NULL) {
   # loading logger
   log.initiating()
-  flog.info("Begin wcpm process", name = "orfrlog")
+  flog.info("Begin scoring process", name = "orfrlog")
 
   # Check MCEM object
-  if (class(object)[1] == "mcem") {
+  if (class(object)[1] == "fit.model") {
     MCEM <- object
   } else { # if no MCEM object stop running
-    flog.info("Missed MCEM object, end wcpm process", name = "orfrlog")
+    flog.info("Missed fit.model object, end scoring process", name = "orfrlog")
     return(NULL)
   }
 
 
   # get estimator type
   Estimator <- est
-  flog.info(paste(paste("Output", est),"WCPM score"), name = "orfrlog")
+  flog.info(paste(paste("Output", est),"estimating score"), name = "orfrlog")
 
-  est.theta.tau <- function(stu.data, pass.data, case, lo = -4, hi = 4, q = 100, external=NULL) {
+  est.theta.tau <- function(person.data, task.data, case, lo = -4, hi = 4, q = 100, external=NULL, type=NULL) {
 
     case_split <- unlist(str_split(case, "_"))
-    stu.dat01 <- stu.data %>% filter(stu.data$student.id==case_split[1], stu.data$occasion==case_split[2])
-    if (nrow(stu.dat01) == 0) {
+    person.dat01 <- person.data %>% filter(person.data$person.id==case_split[1], person.data$occasion==case_split[2])
+    if (nrow(person.dat01) == 0) {
       # flog.info(paste("No data for:", case), name = "orfrlog")
       return(NULL)
     }
-    pass.read <- stu.dat01 %>% select(passage.id)
+    task.read <- person.dat01 %>% select(task.id)
 
-    # passage.id should be included in MCEM object
-    pass.dat01 <- pass.data %>% semi_join(pass.read, by = "passage.id")
-    n.pass <- nrow(pass.dat01)
+    # task.id should be included in MCEM object
+    task.dat01 <- task.data %>% semi_join(task.read, by = "task.id")
+    task.n <- nrow(task.dat01)
 
-    numwords.total <- stu.dat01 %>% select(numwords.p) %>% c() %>% unlist() %>% sum()
-    grade <- stu.dat01 %>% select(grade) %>% c() %>% unlist %>% unique()
+    max.counts.total <- person.dat01 %>% select(max.counts) %>% c() %>% unlist() %>% sum()
+    group <- person.dat01 %>% select(group) %>% c() %>% unlist %>% unique()
 
-    wrc <- stu.dat01 %>% select(wrc) %>% c() %>% unlist()
-    lgsec <- stu.dat01 %>% select(lgsec) %>% c() %>% unlist()
-    numwords.p <- stu.dat01 %>% select(numwords.p) %>% c() %>% unlist()
-    lgsec10 <- lgsec-log(numwords.p) + log(10)
+    obs.counts <- person.dat01 %>% select(obs.counts) %>% c() %>% unlist()
+    lgsec <- person.dat01 %>% select(lgsec) %>% c() %>% unlist()
+    max.counts <- person.dat01 %>% select(max.counts) %>% c() %>% unlist()
+    lgsec10 <- lgsec-log(max.counts) + log(10)
 
-    a.par <- pass.dat01 %>% select(a) %>% c() %>% unlist()
-    b.par <- pass.dat01 %>% select(b) %>% c() %>% unlist()
-    alpha.par <- pass.dat01 %>% select(alpha) %>% c() %>% unlist()
-    beta.par <- pass.dat01 %>% select(beta) %>% c() %>% unlist()
+    a.par <- task.dat01 %>% select(a) %>% c() %>% unlist()
+    b.par <- task.dat01 %>% select(b) %>% c() %>% unlist()
+    alpha.par <- task.dat01 %>% select(alpha) %>% c() %>% unlist()
+    beta.par <- task.dat01 %>% select(beta) %>% c() %>% unlist()
 
     if (!is.null(external))  { # When external passages
 
-      # get a, b, alpha, beta from MCEM with specific passage.id
-      a.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(a) %>% c() %>% unlist()
-      b.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(b) %>% c() %>% unlist()
-      alpha.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(alpha) %>% c() %>% unlist()
-      beta.par.external <- pass.data %>% filter(passage.id %in% external) %>% select(beta) %>% c() %>% unlist()
-      numwords.p.external <- pass.data %>% filter(passage.id %in% external) %>% select(numwords.p) %>% c() %>% unlist()
+      # get a, b, alpha, beta from MCEM with specific task.id
+      a.par.external <- task.data %>% filter(task.id %in% external) %>% select(a) %>% c() %>% unlist()
+      b.par.external <- task.data %>% filter(task.id %in% external) %>% select(b) %>% c() %>% unlist()
+      alpha.par.external <- task.data %>% filter(task.id %in% external) %>% select(alpha) %>% c() %>% unlist()
+      beta.par.external <- task.data %>% filter(task.id %in% external) %>% select(beta) %>% c() %>% unlist()
+      max.counts.external <- task.data %>% filter(task.id %in% external) %>% select(max.counts) %>% c() %>% unlist()
     }
 
-    # Compute n.pass.wcpm and numwords.total.wcpm
+    # Compute task.n.wcpm and max.counts.total.wcpm
     if (is.null(external)) {
-      n.pass.wcpm <- n.pass
-      numwords.total.wcpm <- sum(numwords.p)
+      task.n.wcpm <- task.n
+      max.counts.total.wcpm <- sum(max.counts)
     } else {
-      n.pass.wcpm <- length(external)
-      numwords.total.wcpm <- sum(numwords.p.external)
+      task.n.wcpm <- length(external)
+      max.counts.total.wcpm <- sum(max.counts.external)
     }
 
     # Using MCEM to calculate rho and vartau
     rho <- mean(MCEM$hyper.param$rho)
     vartau <- mean(MCEM$hyper.param$vartau)
 
-    # Compute observed accuracy (wrc), speed (secs), and fluency (wcpm).
-    wrc.obs <- stu.dat01 %>% select(wrc) %>% sum()
-    secs.obs <- stu.dat01 %>% select(sec) %>% sum()
-    wcpm.obs <- wrc.obs/secs.obs*60
+    # Compute observed accuracy (obs.counts), speed (secs), and fluency (wcpm).
+    obs.counts.obs <- person.dat01 %>% select(obs.counts) %>% sum()
+    secs.obs <- person.dat01 %>% select(time) %>% sum()
+    wcpm.obs <- obs.counts.obs/secs.obs*60
 
     mod.pd1 <- function(theta) {
       eta <- a.par*theta - b.par
-      #term1 <- sum(a.par*wrc*dnorm(eta)/pnorm(eta))
-      #term2 <- sum(a.par*(numwords.p-wrc)*dnorm(eta)/(1-pnorm(eta)))
-      term1 <- sum(a.par*wrc*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE)))
-      term2 <- sum(a.par*(numwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
+      #term1 <- sum(a.par*obs.counts*dnorm(eta)/pnorm(eta))
+      #term2 <- sum(a.par*(max.counts-obs.counts)*dnorm(eta)/(1-pnorm(eta)))
+      term1 <- sum(a.par*obs.counts*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE)))
+      term2 <- sum(a.par*(max.counts-obs.counts)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
       pd1 <- term1 - term2
     }
 
@@ -637,7 +638,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     theta.mle <- Inf # for perfect case
     eta <- NA
     se.theta.mle <- NA
-    wrc.mle0 <- NA
+    obs.counts.mle0 <- NA
     wcpm.mle0 <- NA
     k.theta0 <- NA
     se.wcpm.mle0 <- NA
@@ -647,27 +648,27 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
     tau.mle <- sum(alpha.par^2*(beta.par - lgsec10))/sum(alpha.par^2)
     se.tau <- sum(alpha.par^2)^(-0.5)
 
-    # only for non-perfect season case
+    # only for non-perfect occasion case
     if (!(case %in% perfect.cases$perfect.cases)) {
       theta.mle <- uniroot(mod.pd1, c(-12, 12))$root
       eta <- a.par*theta.mle - b.par
-      #se.theta.mle <- sum((a.par*numwords.p*dnorm(eta))/(pnorm(eta)*(1-pnorm(eta))))^(-0.5)
-      I.theta <- sum(a.par^2*numwords.p*dnorm(eta)^2/(pnorm(eta)*(1-pnorm(eta))))
+      #se.theta.mle <- sum((a.par*max.counts*dnorm(eta))/(pnorm(eta)*(1-pnorm(eta))))^(-0.5)
+      I.theta <- sum(a.par^2*max.counts*dnorm(eta)^2/(pnorm(eta)*(1-pnorm(eta))))
       se.theta.mle <- 1/sqrt(I.theta)
 
       if (is.null(external)) { #internal
-        #secs.mle0 <- sum(exp(beta.par + log(numwords.p) - tau.mle + ((1/alpha.par)^2)/2))
-        secs.mle0 <- sum(exp(beta.par - log(10) + log(numwords.p) - tau.mle + ((1/alpha.par)^2)/2))
-        wrc.mle0 <- sum(numwords.p*pnorm(a.par*theta.mle - b.par))
-        wcpm.mle0 <- wrc.mle0/secs.mle0*60
-        k.theta0 <- sum(a.par*numwords.p*dnorm( a.par*theta.mle - b.par ))/sum(numwords.p*pnorm( a.par*theta.mle - b.par ))
+        #secs.mle0 <- sum(exp(beta.par + log(max.counts) - tau.mle + ((1/alpha.par)^2)/2))
+        secs.mle0 <- sum(exp(beta.par - log(10) + log(max.counts) - tau.mle + ((1/alpha.par)^2)/2))
+        obs.counts.mle0 <- sum(max.counts*pnorm(a.par*theta.mle - b.par))
+        wcpm.mle0 <- obs.counts.mle0/secs.mle0*60
+        k.theta0 <- sum(a.par*max.counts*dnorm( a.par*theta.mle - b.par ))/sum(max.counts*pnorm( a.par*theta.mle - b.par ))
         se.wcpm.mle0 <- wcpm.mle0*(k.theta0^2*se.theta.mle^2 + se.tau^2)^0.5
       } else {
         # if external, will calculate with external a, b, alpha, and beta
-        secs.mle0 <- sum(exp(beta.par.external - log(10) + log(numwords.p.external) - tau.mle + ((1/alpha.par.external)^2)/2))
-        wrc.mle0 <- sum(numwords.p.external*pnorm(a.par.external*theta.mle - b.par.external))
-        wcpm.mle0 <- wrc.mle0/secs.mle0*60
-        k.theta0 <- sum(a.par.external*numwords.p.external*dnorm( a.par.external*theta.mle - b.par.external ))/sum(numwords.p.external*pnorm( a.par.external*theta.mle - b.par.external ))
+        secs.mle0 <- sum(exp(beta.par.external - log(10) + log(max.counts.external) - tau.mle + ((1/alpha.par.external)^2)/2))
+        obs.counts.mle0 <- sum(max.counts.external*pnorm(a.par.external*theta.mle - b.par.external))
+        wcpm.mle0 <- obs.counts.mle0/secs.mle0*60
+        k.theta0 <- sum(a.par.external*max.counts.external*dnorm( a.par.external*theta.mle - b.par.external ))/sum(max.counts.external*pnorm( a.par.external*theta.mle - b.par.external ))
         se.wcpm.mle0 <- wcpm.mle0*(k.theta0^2*se.theta.mle^2 + se.tau^2)^0.5
 
       }
@@ -675,17 +676,28 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
 
     if (Estimator == "mle") {
       # flog.info(paste(paste("Output", est),"WCPM score"), name = "orfrlog")
+      if (type == "orf") { # with wcpm
+        out <- tibble(person.id=case_split[1], occasion=case_split[2], group=group,
+                      task.n=task.n, max.counts.total=max.counts.total,
+                      obs.counts.obs, secs.obs, wcpm.obs,
+                      tau.mle,
+                      theta.mle,
+                      se.tau.mle=se.tau,
+                      se.theta.mle,
+                      obs.counts.mle=obs.counts.mle0, secs.mle=secs.mle0,
+                      task.n.wcpm,max.counts.total.wcpm,
+                      wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
+      } else { #without wcpm
+        out <- tibble(person.id=case_split[1], occasion=case_split[2], group=group,
+                      task.n=task.n, max.counts.total=max.counts.total,
+                      obs.counts.obs, secs.obs,
+                      tau.mle,
+                      theta.mle,
+                      se.tau.mle=se.tau,
+                      se.theta.mle,
+                      obs.counts.mle=obs.counts.mle0, secs.mle=secs.mle0)
+      }
 
-      out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                    n.pass=n.pass, numwords.total=numwords.total,
-                    wrc.obs, secs.obs, wcpm.obs,
-                    tau.mle,
-                    theta.mle,
-                    se.tau.mle=se.tau,
-                    se.theta.mle,
-                    wrc.mle=wrc.mle0, secs.mle=secs.mle0,
-                    n.pass.wcpm,numwords.total.wcpm,
-                    wcpm.mle=wcpm.mle0, se.wcpm.mle=se.wcpm.mle0)
       return(out)
     } else if (Estimator == "map") {
       # flog.info(paste(paste("Output", est),"WCPM score"), name = "orfrlog")
@@ -696,8 +708,8 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
         eta <- a.par*theta - b.par
 
         ee1 <- -1/(kappa^2*(1-rho^2))*(theta-rho/sqrt(vartau)*tau) +
-          sum(a.par*wrc*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE))) -
-          sum(a.par*(numwords.p-wrc)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
+          sum(a.par*obs.counts*exp(dnorm(eta,log = TRUE)-pnorm(eta,log.p = TRUE))) -
+          sum(a.par*(max.counts-obs.counts)*exp(dnorm(eta,log = TRUE)-pnorm(eta, lower.tail = FALSE, log.p = TRUE)))
         # Modified the bug here
         # ee2 <- -1/(kappa^2*(1-rho^2))*(theta/vartau-rho/sqrt(vartau)*tau) -
         #   sum(alpha.par*(lgsec10 - beta.par + tau))
@@ -714,36 +726,46 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       # MAP Standard Errors for tau and theta
       se.tau.map <- sum(alpha.par^2)^(-0.5)
       eta <- a.par*ests.map[1] - b.par
-      I.theta <- sum(a.par^2*numwords.p*dnorm(eta)^2/(pnorm(eta)*(1-pnorm(eta))))
+      I.theta <- sum(a.par^2*max.counts*dnorm(eta)^2/(pnorm(eta)*(1-pnorm(eta))))
       se.theta.map <- 1/sqrt(I.theta)
       # MAP WCPM score
       if (is.null(external)) { #internal
-        wrc.map <- sum(numwords.p*pnorm(a.par*ests.map[1] - b.par))
-        secs.map <- sum(exp(beta.par - log(10) + log(numwords.p) - ests.map[2] + ((1/alpha.par)^2)/2))
-        wcpm.map <- wrc.map/secs.map*60
-        k.theta.map <- sum(a.par*numwords.p*dnorm( a.par*ests.map[1] - b.par ))/sum(numwords.p*pnorm( a.par*ests.map[1] - b.par ))
+        obs.counts.map <- sum(max.counts*pnorm(a.par*ests.map[1] - b.par))
+        secs.map <- sum(exp(beta.par - log(10) + log(max.counts) - ests.map[2] + ((1/alpha.par)^2)/2))
+        wcpm.map <- obs.counts.map/secs.map*60
+        k.theta.map <- sum(a.par*max.counts*dnorm( a.par*ests.map[1] - b.par ))/sum(max.counts*pnorm( a.par*ests.map[1] - b.par ))
         se.wcpm.map <- wcpm.map*(k.theta.map^2*se.theta.map^2 + se.tau^2)^0.5
       } else {
         # if external, will calculate with external a, b, alpha, and beta
-        wrc.map <- sum(numwords.p.external*pnorm(a.par.external*ests.map[1] - b.par.external))
-        secs.map <- sum(exp(beta.par.external - log(10) + log(numwords.p.external) - ests.map[2] + ((1/alpha.par.external)^2)/2))
-        wcpm.map <- wrc.map/secs.map*60
-        k.theta.map <- sum(a.par.external*numwords.p.external*dnorm( a.par.external*ests.map[1] - b.par.external ))/sum(numwords.p.external*pnorm( a.par.external*ests.map[1] - b.par.external ))
+        obs.counts.map <- sum(max.counts.external*pnorm(a.par.external*ests.map[1] - b.par.external))
+        secs.map <- sum(exp(beta.par.external - log(10) + log(max.counts.external) - ests.map[2] + ((1/alpha.par.external)^2)/2))
+        wcpm.map <- obs.counts.map/secs.map*60
+        k.theta.map <- sum(a.par.external*max.counts.external*dnorm( a.par.external*ests.map[1] - b.par.external ))/sum(max.counts.external*pnorm( a.par.external*ests.map[1] - b.par.external ))
         se.wcpm.map <- wcpm.map*(k.theta.map^2*se.theta.map^2 + se.tau^2)^0.5
       }
       # End of MAP estimation
-
-      out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                    n.pass=n.pass, numwords.total=numwords.total,
-                    wrc.obs, secs.obs, wcpm.obs,
-                    tau.map=ests.map[2],
-                    theta.map=ests.map[1],
-                    # add these two columns, similar to EAP output
-                    se.tau.map=se.tau.map,
-                    se.theta.map=se.theta.map,
-                    wrc.map, secs.map,
-                    n.pass.wcpm,numwords.total.wcpm,
-                    wcpm.map, se.wcpm.map)
+      if (type == "orf") { # with wcpm
+        out <- tibble(person.id=case_split[1], occasion=case_split[2], group=group,
+                      task.n=task.n, max.counts.total=max.counts.total,
+                      obs.counts.obs, secs.obs, wcpm.obs,
+                      tau.map=ests.map[2],
+                      theta.map=ests.map[1],
+                      # add these two columns, similar to EAP output
+                      se.tau.map=se.tau.map,
+                      se.theta.map=se.theta.map,
+                      obs.counts.map, secs.map,
+                      task.n.wcpm,max.counts.total.wcpm,
+                      wcpm.map, se.wcpm.map)
+      } else { #without wcpm
+        out <- tibble(person.id=case_split[1], occasion=case_split[2], group=group,
+                      task.n=task.n, max.counts.total=max.counts.total,
+                      obs.counts.obs, secs.obs,
+                      tau.map=ests.map[2],
+                      theta.map=ests.map[1],
+                      se.tau.map=se.tau.map,
+                      se.theta.map=se.theta.map,
+                      obs.counts.map, secs.map)
+      }
       return(out)
     } else if (Estimator == "eap") {
       # flog.info(paste(paste("Output", est),"WCPM score"), name = "orfrlog")
@@ -758,7 +780,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       LQ <- rep(0, q)
       for(i in 1:q) {
         eta <- a.par*Q[i] - b.par
-        binom.lik <- dbinom(wrc, numwords.p, pnorm(eta), log = T)
+        binom.lik <- dbinom(obs.counts, max.counts, pnorm(eta), log = T)
         LQk <- exp(sum(binom.lik))
         LQ[i] <- LQk
       }
@@ -776,7 +798,7 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       loglik <- function(z) {
         theta <- z[1]
         tau <- z[2]
-        loglik.bi <- sum(dbinom(wrc, numwords.p, pnorm((a.par*theta)-b.par), log = T)) +
+        loglik.bi <- sum(dbinom(obs.counts, max.counts, pnorm((a.par*theta)-b.par), log = T)) +
           sum(dnorm(lgsec10, beta.par-tau, 1/alpha.par, log = T))
       }
 
@@ -785,33 +807,44 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
       se.quad <- c(sqrt(varmat[1,1]), sqrt(varmat[2,2]))
       # QUAD WCPM score
       if (is.null(external)) { #internal
-        wrc.quad <- sum(numwords.p*pnorm(a.par*ests.quad[1] - b.par))
-        secs.quad <- sum(exp(beta.par - log(10) + log(numwords.p) - ests.quad[2] + ((1/alpha.par)^2)/2))
-        wcpm.quad <- wrc.quad/secs.quad*60
-        k.theta.quad <- sum(a.par*numwords.p*dnorm( a.par*ests.quad[1] - b.par ))/sum(numwords.p*pnorm( a.par*ests.quad[1] - b.par ))
+        obs.counts.quad <- sum(max.counts*pnorm(a.par*ests.quad[1] - b.par))
+        secs.quad <- sum(exp(beta.par - log(10) + log(max.counts) - ests.quad[2] + ((1/alpha.par)^2)/2))
+        wcpm.quad <- obs.counts.quad/secs.quad*60
+        k.theta.quad <- sum(a.par*max.counts*dnorm( a.par*ests.quad[1] - b.par ))/sum(max.counts*pnorm( a.par*ests.quad[1] - b.par ))
         se.wcpm.quad <- wcpm.quad*(k.theta.quad^2*se.quad[1]^2 + se.quad[2]^2)^0.5
       } else {
         # if external, will calculate with external a, b, alpha, and beta
-        wrc.quad <- sum(numwords.p.external*pnorm(a.par.external*ests.quad[1] - b.par.external))
-        secs.quad <- sum(exp(beta.par.external - log(10) + log(numwords.p.external) - ests.quad[2] + ((1/alpha.par.external)^2)/2))
-        wcpm.quad <- wrc.quad/secs.quad*60
-        k.theta.quad <- sum(a.par.external*numwords.p.external*dnorm( a.par.external*ests.quad[1] - b.par.external ))/sum(numwords.p.external*pnorm( a.par.external*ests.quad[1] - b.par.external ))
+        obs.counts.quad <- sum(max.counts.external*pnorm(a.par.external*ests.quad[1] - b.par.external))
+        secs.quad <- sum(exp(beta.par.external - log(10) + log(max.counts.external) - ests.quad[2] + ((1/alpha.par.external)^2)/2))
+        wcpm.quad <- obs.counts.quad/secs.quad*60
+        k.theta.quad <- sum(a.par.external*max.counts.external*dnorm( a.par.external*ests.quad[1] - b.par.external ))/sum(max.counts.external*pnorm( a.par.external*ests.quad[1] - b.par.external ))
         se.wcpm.quad <- wcpm.quad*(k.theta.quad^2*se.quad[1]^2 + se.quad[2]^2)^0.5
       }
       # End of BiEAP
-
-      out <- tibble(student.id=case_split[1], occasion=case_split[2], grade=grade,
-                    n.pass=n.pass, numwords.total=numwords.total,
-                    wrc.obs, secs.obs, wcpm.obs,
-                    tau.eap = ests.quad[2],
-                    theta.eap = ests.quad[1],
-                    se.tau.eap = se.quad[2],
-                    se.theta.eap = se.quad[1],
-                    wrc.eap = wrc.quad,
-                    secs.eap = secs.quad,
-                    n.pass.wcpm,numwords.total.wcpm,
-                    wcpm.eap = wcpm.quad,
-                    se.wcpm.eap = se.wcpm.quad)
+      if (type == "orf") { # with wcpm
+        out <- tibble(person.id=case_split[1], occasion=case_split[2], group=group,
+                      task.n=task.n, max.counts.total=max.counts.total,
+                      obs.counts.obs, secs.obs, wcpm.obs,
+                      tau.eap = ests.quad[2],
+                      theta.eap = ests.quad[1],
+                      se.tau.eap = se.quad[2],
+                      se.theta.eap = se.quad[1],
+                      obs.counts.eap = obs.counts.quad,
+                      secs.eap = secs.quad,
+                      task.n.wcpm,max.counts.total.wcpm,
+                      wcpm.eap = wcpm.quad,
+                      se.wcpm.eap = se.wcpm.quad)
+      } else { # without wcpm
+        out <- tibble(person.id=case_split[1], occasion=case_split[2], group=group,
+                      task.n=task.n, max.counts.total=max.counts.total,
+                      obs.counts.obs, secs.obs,
+                      tau.eap = ests.quad[2],
+                      theta.eap = ests.quad[1],
+                      se.tau.eap = se.quad[2],
+                      se.theta.eap = se.quad[1],
+                      obs.counts.eap = obs.counts.quad,
+                      secs.eap = secs.quad)
+      }
       return(out)
     }
 
@@ -825,18 +858,18 @@ run.wcpm <- function(object, stu.data, pass.data, cases, perfect.cases, est="map
 
   seq_id_all <- nrow(cases)
 
-  theta.tau <- foreach(i=1:seq_id_all, .combine = 'rbind', .packages = c("tidyverse", "MultiGHQuad")) %dopar%
-    { est.theta.tau(stu.data,
-                    pass.data,
+  theta.tau <- foreach(i=1:seq_id_all, .combine = 'rbind', .packages = c("tidyverse", "MultiGHQuad")) %dopar% #%dopar%
+    { est.theta.tau(person.data,
+                    task.data,
                     cases$cases[i],
-                    lo, hi, q, external=external)
+                    lo, hi, q, external=external, type=type)
     }
   if (length(theta.tau[1]) != 0) {
-    class(theta.tau) <- "wcpm" #define wcpm class
+    class(theta.tau) <- "scoring" #define wcpm class
   }
 
   on.exit(stopCluster(cl))
 
-  flog.info("End wcpm process", name = "orfrlog")
+  flog.info("End scoring process", name = "orfrlog")
   return(invisible(theta.tau))
 }

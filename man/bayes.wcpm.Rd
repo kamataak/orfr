@@ -6,13 +6,13 @@
 \usage{
 bayes.wcpm(
   calib.data = NA,
-  stu.data = NA,
-  studentid = NULL,
-  passageid = NULL,
-  season = NULL,
-  grade = NULL,
-  numwords.p = NULL,
-  wrc = NULL,
+  person.data = NA,
+  person.id = NULL,
+  task.id = NULL,
+  occasion = NULL,
+  group = NULL,
+  max.counts = NULL,
+  obs.counts = NULL,
   time = NULL,
   cases = NULL,
   external = NULL,
@@ -24,21 +24,21 @@ bayes.wcpm(
 )
 }
 \arguments{
-\item{calib.data}{- mcem class object}
+\item{calib.data}{- fit.model class object}
 
-\item{stu.data}{- student reading data}
+\item{person.data}{- individual reading data}
 
-\item{studentid}{The column name in the data that represents the unique student identifier.}
+\item{person.id}{The column name in the data that represents the unique individual identifier.}
 
-\item{passageid}{The column name in the data that represents the unique passage identifier.}
+\item{task.id}{The column name in the data that represents the unique task identifier.}
 
-\item{season}{The column name in the data that represents the period of data collection.}
+\item{occasion}{The column name in the data that represents the unique occasion.}
 
-\item{grade}{The column name in the data that represents the grade of student.}
+\item{group}{The column name in the data that represents the unique group.}
 
-\item{numwords.p}{The column name in the data that represents the number of words in a passage.}
+\item{max.counts}{The column name in the data that represents the number of words in a task.}
 
-\item{wrc}{The column name in the data that represents the words read correctly for each case.}
+\item{obs.counts}{The column name in the data that represents the words read correctly for each case.}
 
 \item{time}{The column name in the data that represents the time, in seconds, for each case.}
 

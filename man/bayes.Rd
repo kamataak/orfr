@@ -5,11 +5,11 @@
 \title{Bayes function when running mcem with mcmc setting}
 \usage{
 bayes(
-  stu.data = NA,
-  studentid = "",
-  passageid = "",
-  numwords.p = "",
-  wrc = "",
+  person.data = NA,
+  person.id = "",
+  task.id = "",
+  max.counts = "",
+  obs.counts = "",
   time = "",
   parallel = T,
   n.chains = NA,
@@ -19,15 +19,15 @@ bayes(
 )
 }
 \arguments{
-\item{stu.data}{- student reading data}
+\item{person.data}{- student reading data}
 
-\item{studentid}{The column name in the data that represents the unique student identifier.}
+\item{person.id}{The column name in the data that represents the unique individual identifier.}
 
-\item{passageid}{The column name in the data that represents the unique passage identifier.}
+\item{task.id}{The column name in the data that represents the unique task identifier.}
 
-\item{numwords.p}{The column name in the data that represents the number of words in a passage.}
+\item{max.counts}{The column name in the data that represents the number of words in a task.}
 
-\item{wrc}{The column name in the data that represents the words read correctly for each case.}
+\item{obs.counts}{The column name in the data that represents the words read correctly for each case.}
 
 \item{time}{The column name in the data that represents the time, in seconds, for each case.}
 
