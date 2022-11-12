@@ -7,7 +7,7 @@ case is a single stu_season_id}
 \usage{
 getBootstrapSE(
   object,
-  stu.data,
+  person.data,
   case = NA,
   perfect.cases,
   est = "map",
@@ -19,7 +19,7 @@ getBootstrapSE(
 \arguments{
 \item{object}{- mcem class object}
 
-\item{stu.data}{- student response data}
+\item{person.data}{- individual response data}
 
 \item{case}{- case number}
 
@@ -31,7 +31,7 @@ getBootstrapSE(
 
 \item{bootstrap}{- K number of bootstrap, default is 100}
 
-\item{external}{- if not NULL, will use not student read passages for estimating}
+\item{external}{- if not NULL, will use unread task for estimating}
 }
 \value{
 SE dataset

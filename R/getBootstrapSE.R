@@ -6,13 +6,13 @@
 #' Modified EAP 10/28/2021
 #'
 #' @param object - mcem class object
-#' @param person.data - student response data
+#' @param person.data - individual response data
 #' @param case - case number
 #' @param est - SE type.(MLE, EAP, and MAP.) default MAP
 #' @param perfect.cases - perfect accurate case
 #' @param kappa - Default kappa = 1, better be 5
 #' @param bootstrap - K number of bootstrap, default is 100
-#' @param external - if not NULL, will use not student read passages for estimating
+#' @param external - if not NULL, will use unread task for estimating
 #'
 #' @return SE dataset
 getBootstrapSE <- function (object, person.data, case=NA, perfect.cases, est="map", kappa=1, bootstrap=100, external=NULL) {
