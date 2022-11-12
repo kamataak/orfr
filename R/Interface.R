@@ -53,7 +53,7 @@ fit.model <- function(data=NA, person.data=NA, person.id="",task.id="",max.count
         b = MCEMests$b,
         alpha = MCEMests$alpha,
         beta = MCEMests$beta,
-        passage.id = as.numeric(colnames(data$Y)),
+        task.id = as.numeric(colnames(data$Y)),
         max.counts = data$N)
       hyper.param <- tibble(vartau = MCEMests$vartau,
                             rho = MCEMests$rho)
